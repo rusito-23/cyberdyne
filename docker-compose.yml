@@ -49,7 +49,7 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=America/Argentina/Mendoza
+      - TZ=America/Argentina/Cordoba
       - AUTO_UPDATE=true
     volumes:
       - ${CONFIG_DIR:-./config}/jackett:/config
