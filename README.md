@@ -13,6 +13,7 @@ Stack completo en Docker para correr tu propio servidor de medios en casa: pelí
 - **qBittorrent** — cliente torrent
 - **Jellyseerr** — UI de pedidos (un Netflix para tus usuarios)
 - **Wizarr** — invitaciones de usuarios
+- **Pi-hole** — DNS ad-blocking para toda la red (`:8081`, sin subpath)
 
 Mirá [`architecture.excalidraw`](architecture.excalidraw) para el diagrama completo de topología (abrilo en <https://excalidraw.com>).
 
@@ -28,7 +29,8 @@ La estructura interna de carpetas sigue la convención de [TRaSH Guides](https:/
 
 - Servidor Linux (o VM) con **Docker 24+** y **Docker Compose v2**
 - ~20 GB libres en disco para configs y descargas (más si vas a tener una biblioteca grande)
-- Puertos **80**, **443**, **8080**, **9117** y **8191** abiertos
+- Puertos **80**, **443**, **53** (TCP+UDP), **8080**, **8081**, **9117** y **8191** abiertos
+- Si el host corre `systemd-resolved` (default en muchas distros), va a competir con Pi-hole por el puerto 53 — desactivalo antes de levantar el stack (ver [Troubleshooting](#troubleshooting))
 - Un dominio público (recomendado para HTTPS) o entradas de DNS local — el stack funciona con `http://localhost` también, pero el HTTPS automático necesita un dominio real
 
 ## Inicio rápido
@@ -89,6 +91,7 @@ La estructura interna de carpetas sigue la convención de [TRaSH Guides](https:/
    | **qBittorrent** | **`http://tu-servidor:8080`** |
    | **Jackett** | **`http://tu-servidor:9117`** |
    | **FlareSolverr** | **`http://tu-servidor:8191`** |
+   | **Pi-hole** | **`http://tu-servidor:8081/admin`** |
 
    La primera vez, cada app te pide crear una cuenta. Mirá [Configuración inicial](#configuración-inicial) más abajo.
 
@@ -150,6 +153,11 @@ Una vez que el stack está arriba y accesible:
 8. **Bazarr** — `Settings → Sonarr/Radarr → Connect` (pegá la API key de cada app).
 9. **Jellyseerr** — conectalo a Jellyfin (API key en `Dashboard → API Keys`) y a Sonarr/Radarr.
 10. **Wizarr** — generá links de invitación desde la UI web para sumar amigos o familia.
+11. **Pi-hole** — iniciá sesión en `:8081/admin` con la contraseña temporal que imprime el container en los logs:
+    ```bash
+    docker logs pihole | grep -i 'random password'
+    ```
+    Cambiala en `Settings → Web interface / API`. Para que funcione como DNS de tu red, apuntá el DNS de tu router (o de cada device manualmente) a la IP del Pi.
 
 ## Operaciones diarias
 
@@ -183,6 +191,13 @@ docker compose down -v
 - **Caddy se queja de "Caddyfile is a directory" o todos los subpaths devuelven 404.** El bind mount no encontró el archivo en el host y Docker creó un directorio vacío adentro del contenedor. Asegurate de haber clonado el repo con `caddy/Caddyfile` presente (no debe estar ignorado por `.gitignore`). Si no existe, copialo manualmente a `./caddy/Caddyfile` y reintenta `docker compose up -d --force-recreate caddy`.
 - **Errores de "Permission denied" escribiendo a `/data/torrents` o `/data/media`.** Los valores `PUID`/`PGID` en `docker-compose.yml` no coinciden con tu usuario del host. Actualizalos y reiniciá.
 - **"Address already in use" en los puertos 80/443/8080/9117/8191.** Hay otro servicio ocupando esos puertos. Frenalo o cambialos en `docker-compose.yml`.
+- **Pi-hole no levanta / puerto 53 ocupado.** `systemd-resolved` (u otro `dnsmasq`/`bind` local) suele tomar el puerto 53 en el host. Desactivalo:
+  ```bash
+  sudo systemctl disable --now systemd-resolved
+  sudo rm -f /etc/resolv.conf
+  echo "nameserver 1.1.1.1" | sudo tee /etc/resolv.conf
+  ```
+  Después reintentá `docker compose up -d pihole`.
 - **Los *arr no encuentran las descargas / Jellyfin no muestra archivos nuevos.** Mirá [docs/DATA_LAYOUT.md](docs/DATA_LAYOUT.md): cada *arr necesita el Root Folder correcto y qBittorrent tiene que tener como Default Save Path `/data/torrents`.
 - **Un indexer con CloudflareChallenge falla constantemente.** FlareSolverr no quedó configurado como proxy en Sonarr/Radarr. Revisá el paso 3 de [Configuración inicial](#configuración-inicial).
 
@@ -199,7 +214,8 @@ cyberdyne/
 │   ├── qbittorrent/
 │   ├── jellyseerr/
 │   ├── wizarr/
-│   └── flaresolverr/
+│   ├── flaresolverr/
+│   └── pihole/
 ├── caddy/                  # Caddyfile estático, commiteado (es infra-as-code)
 │   └── Caddyfile
 ├── data/                   # Medios + descargas (ignorado por git)
@@ -238,3 +254,4 @@ Pull requests bienvenidos. Mantené los cambios enfocados y actualizá este READ
 - [Jellyfin](https://jellyfin.org) — por el servidor de medios
 - [Jellyseerr](https://github.com/Fallenbagel/jellyseerr) — por la UI de pedidos
 - [Wizarr](https://github.com/Wizarrrr/wizarr) — por el sistema de invitaciones
+- [Pi-hole](https://pi-hole.net/) — por el DNS ad-blocking

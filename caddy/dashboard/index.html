@@ -154,13 +154,24 @@
     </div>
   </div>
 
+  <div class="group">
+    <h2>Network</h2>
+    <div class="grid">
+      <a class="card" data-port="8081" data-path="/admin">
+        <span class="icon">🕳️</span>
+        <span class="name">Pi-hole</span>
+        <span class="desc">DNS / ad-blocking</span>
+      </a>
+    </div>
+  </div>
+
   <!--
     To add a new service:
     1. Add a new group (or drop a card into an existing one).
     2. Caddy subpath app (has its own UrlBase, proxied at /name):
          <a class="card" href="/name"><span class="icon">🕳️</span><span class="name">Name</span><span class="desc">What it does</span></a>
-    3. App on its own host port (no Caddy route), e.g. Pi-hole on :80/admin:
-         <a class="card" data-port="PORT" data-path="/admin"><span class="icon">🕳️</span><span class="name">Pi-hole</span><span class="desc">DNS / ad-blocking</span></a>
+    3. App on its own host port (no Caddy route):
+         <a class="card" data-port="PORT" data-path="/admin"><span class="icon">🕳️</span><span class="name">Name</span><span class="desc">What it does</span></a>
   -->
 
 </div>
