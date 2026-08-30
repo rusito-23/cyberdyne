@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cyberdyne</title>
+<style>
+  :root {
+    color-scheme: dark light;
+    --bg: #0f1115;
+    --card: #1a1d24;
+    --card-hover: #22262f;
+    --text: #e8e9ec;
+    --muted: #8b8f98;
+    --accent: #7aa2f7;
+    --border: #2a2e37;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 3rem 1.5rem;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  h1 {
+    font-size: 1.75rem;
+    margin: 0 0 0.25rem;
+    letter-spacing: 0.02em;
+  }
+  header p {
+    color: var(--muted);
+    margin: 0;
+    font-size: 0.95rem;
+  }
+  .groups {
+    max-width: 960px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  .group h2 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0 0 0.75rem;
+    padding-left: 0.1rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.9rem;
+  }
+  a.card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+    text-decoration: none;
+    color: var(--text);
+    transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+  }
+  a.card:hover {
+    background: var(--card-hover);
+    border-color: var(--accent);
+    transform: translateY(-1px);
+  }
+  .card .icon { font-size: 1.4rem; }
+  .card .name { font-weight: 600; font-size: 1rem; }
+  .card .desc { color: var(--muted); font-size: 0.82rem; line-height: 1.3; }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.78rem;
+    margin-top: 3rem;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>cyberdyne</h1>
+  <p>media-stack service directory</p>
+</header>
+
+<div class="groups">
+
+  <div class="group">
+    <h2>Watch &amp; Request</h2>
+    <div class="grid">
+      <a class="card" href="/jellyfin">
+        <span class="icon">🎬</span>
+        <span class="name">Jellyfin</span>
+        <span class="desc">Watch your media library</span>
+      </a>
+      <a class="card" href="/jellyseerr">
+        <span class="icon">📮</span>
+        <span class="name">Jellyseerr</span>
+        <span class="desc">Request movies &amp; shows</span>
+      </a>
+      <a class="card" href="/wizarr">
+        <span class="icon">🪄</span>
+        <span class="name">Wizarr</span>
+        <span class="desc">Invite users to Jellyfin</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="group">
+    <h2>Automation</h2>
+    <div class="grid">
+      <a class="card" href="/sonarr">
+        <span class="icon">📺</span>
+        <span class="name">Sonarr</span>
+        <span class="desc">TV show automation</span>
+      </a>
+      <a class="card" href="/radarr">
+        <span class="icon">🎞️</span>
+        <span class="name">Radarr</span>
+        <span class="desc">Movie automation</span>
+      </a>
+      <a class="card" href="/bazarr">
+        <span class="icon">💬</span>
+        <span class="name">Bazarr</span>
+        <span class="desc">Subtitle management</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="group">
+    <h2>Downloads &amp; Indexing</h2>
+    <div class="grid">
+      <!-- These live on their own host ports rather than a Caddy subpath,
+           so the href is filled in by script below using the current hostname. -->
+      <a class="card" data-port="9117">
+        <span class="icon">🔎</span>
+        <span class="name">Jackett</span>
+        <span class="desc">Indexer proxy</span>
+      </a>
+      <a class="card" data-port="8080">
+        <span class="icon">⬇️</span>
+        <span class="name">qBittorrent</span>
+        <span class="desc">Torrent client</span>
+      </a>
+    </div>
+  </div>
+
+  <!--
+    To add a new service:
+    1. Add a new group (or drop a card into an existing one).
+    2. Caddy subpath app (has its own UrlBase, proxied at /name):
+         <a class="card" href="/name"><span class="icon">🕳️</span><span class="name">Name</span><span class="desc">What it does</span></a>
+    3. App on its own host port (no Caddy route), e.g. Pi-hole on :80/admin:
+         <a class="card" data-port="PORT" data-path="/admin"><span class="icon">🕳️</span><span class="name">Pi-hole</span><span class="desc">DNS / ad-blocking</span></a>
+  -->
+
+</div>
+
+<footer>served by caddy · edit caddy/dashboard/index.html to update this page</footer>
+
+<script>
+  document.querySelectorAll('a.card[data-port]').forEach(function (el) {
+    var port = el.getAttribute('data-port');
+    var path = el.getAttribute('data-path') || '/';
+    el.href = window.location.protocol + '//' + window.location.hostname + ':' + port + path;
+  });
+</script>
+</body>
+</html>

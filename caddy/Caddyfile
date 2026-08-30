@@ -58,6 +58,13 @@
         respond "ok"
     }
 
+    # Dashboard estático con links a todos los servicios (caddy/dashboard/index.html)
+    @root path /
+    handle @root {
+        root * /srv/dashboard
+        file_server
+    }
+
     # Catch-all 404 con mensaje amigable
     handle {
         respond "Not found. Try /jellyfin, /sonarr, /radarr, /bazarr, /jellyseerr, /wizarr. qBittorrent esta en :8080. Jackett en :9117. FlareSolverr en :8191." 404
