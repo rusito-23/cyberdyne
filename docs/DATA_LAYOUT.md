@@ -12,7 +12,7 @@ data/
 │   ├── movies/
 │   ├── series/
 │   └── music/
-└── media/                 # Biblioteca final. Jellyfin y Bazarr leen de acá.
+└── media/                 # Biblioteca final. Plex y Bazarr leen de acá.
     ├── movies/
     ├── series/
     └── music/
@@ -29,7 +29,7 @@ Cada app solo ve la parte de `data/` que necesita:
 | **Sonarr** | `/data` | `${DATA_DIR:-./data}` | Lee torrents, importa a media. Necesita el árbol entero para los hardlinks. |
 | **Radarr** | `/data` | `${DATA_DIR:-./data}` | Igual que Sonarr. |
 | **qBittorrent** | `/data/torrents` | `${DATA_DIR:-./data}/torrents` | Solo escribe descargas. Nunca toca media. |
-| **Jellyfin** | `/data/media` | `${DATA_DIR:-./data}/media` | Lee la biblioteca final. |
+| **Plex** | `/data/media` | `${DATA_DIR:-./data}/media` | Lee la biblioteca final. |
 | **Bazarr** | `/data/media` | `${DATA_DIR:-./data}/media` | Lee la biblioteca final para bajar subtítulos. |
 | Jackett, FlareSolverr, Jellyseerr, Wizarr, Caddy | — | — | No acceden a `data/`. |
 
@@ -51,7 +51,7 @@ Después de levantar el stack, configurá los Root Folders de cada app para que 
 - **Sonarr**: Settings → Media Management → Root Folders → add `/data/series`
 - **Radarr**: Settings → Media Management → Root Folders → add `/data/movies`
 - **qBittorrent**: Tools → Options → Downloads → Default Save Path → `/data/torrents`
-- **Jellyfin**: Dashboard → Libraries → Movies `/data/media/movies`, Series `/data/media/series`, Music `/data/media/music`
+- **Plex**: Add Library → Movies `/data/media/movies`, TV Shows `/data/media/series`, Music `/data/media/music`
 - **Bazarr**: Settings → Sonarr/Radarr → Folder mappings con los mismos paths
 
 ## Agregar un nuevo tipo de medio
@@ -88,7 +88,7 @@ bash scripts/configure-base-urls.sh
 docker compose restart
 ```
 
-Después actualizá los Root Folders adentro de Sonarr/Radarr a `/data/series` y `/data/movies` respectivamente. Jellyfin y Bazarr no necesitan cambios (su target de mount `/data/media` no cambió).
+Después actualizá los Root Folders adentro de Sonarr/Radarr a `/data/series` y `/data/movies` respectivamente. Plex y Bazarr no necesitan cambios (su target de mount `/data/media` no cambió).
 
 ## Fuente
 

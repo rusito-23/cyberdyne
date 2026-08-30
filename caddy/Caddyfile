@@ -24,11 +24,6 @@
         reverse_proxy bazarr:6767
     }
 
-    @jellyfin path /jellyfin*
-    handle @jellyfin {
-        reverse_proxy jellyfin:8096
-    }
-
     # Wizarr custom de pablokbs con APPLICATION_ROOT=/wizarr.
     @wizarr path /wizarr*
     handle @wizarr {
@@ -67,6 +62,6 @@
 
     # Catch-all 404 con mensaje amigable
     handle {
-        respond "Not found. Try /jellyfin, /sonarr, /radarr, /bazarr, /jellyseerr, /wizarr. qBittorrent esta en :8080. Jackett en :9117. FlareSolverr en :8191." 404
+        respond "Not found. Try /sonarr, /radarr, /bazarr, /jellyseerr, /wizarr. qBittorrent esta en :8080. Jackett en :9117. FlareSolverr en :8191. Plex esta en :32400." 404
     }
 }

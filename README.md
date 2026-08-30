@@ -1,12 +1,11 @@
-# Cyberdyne — Jellyfin + *arr auto-hospedado
+# Cyberdyne — Self-hosted Plex + *arr stack
 
 Stack completo en Docker para correr tu propio servidor de medios en casa: películas, series, música, subtítulos, descargas y una UI estilo Netflix para pedir contenido, todo detrás de un único reverse proxy con routing por path.
 
 ## ¿Qué incluye?
 
 - **Caddy** — reverse proxy con routing automático por path (un dominio, muchas apps)
-- **Jellyfin** — servidor de medios (películas, series, música)
-- **Plex** — servidor de medios alternativo (`:32400`, sin subpath), corriendo en paralelo a Jellyfin — útil si tu Smart TV no tiene app de Jellyfin
+- **Plex** — media server (`:32400`, no subpath — needed for TV/mobile app discovery)
 - **Sonarr** / **Radarr** — automatización de bibliotecas (TV, películas)
 - **Jackett** — gestor de indexers (expuesto en `:9117`, sin subpath)
 - **FlareSolverr** — proxy que resuelve challenges de Cloudflare para indexers (`:8191`)
@@ -20,7 +19,7 @@ Mirá [`architecture.excalidraw`](architecture.excalidraw) para el diagrama comp
 
 ## Diagrama del stack
 
-Vista rápida de cómo se conectan las piezas. El pelado apunta al server con dos devices (celu y PC), Caddy rutea por subpath a Jellyfin/Sonarr/Radarr/Bazarr, Sonarr/Radarr/Jackett mandan torrents a qBittorrent que escribe en `/data/torrents/`, y Jellyfin escanea la biblioteca final en `/data/media/`.
+Quick view of how the pieces connect. Two devices (phone and PC) point at the server; Caddy routes by subpath to Sonarr/Radarr/Bazarr, Sonarr/Radarr/Jackett send torrents to qBittorrent which writes to `/data/torrents/`, and Plex (on its own dedicated port, bypassing Caddy) scans the final library in `/data/media/`.
 
 ![Diagrama del stack](docs/cyberdyne-diagram.jpg)
 
@@ -71,7 +70,7 @@ La estructura interna de carpetas sigue la convención de [TRaSH Guides](https:/
    bash scripts/configure-base-urls.sh
    ```
 
-   Esto configura la URL base interna de cada app para que responda bajo `/jellyfin`, `/sonarr`, etc. Es idempotente — se puede volver a correr sin problema.
+   This configures each app's internal URL base so it responds under `/sonarr`, etc. It's idempotent — safe to run again.
 
 6. Reiniciá las apps para que tomen las nuevas URLs:
 
@@ -83,7 +82,6 @@ La estructura interna de carpetas sigue la convención de [TRaSH Guides](https:/
 
    | App | URL |
    | --- | --- |
-   | Jellyfin | `http://tu-servidor/jellyfin` |
    | Sonarr | `http://tu-servidor/sonarr` |
    | Radarr | `http://tu-servidor/radarr` |
    | Bazarr | `http://tu-servidor/bazarr` |
@@ -151,16 +149,15 @@ Una vez que el stack está arriba y accesible:
    docker logs qbittorrent | grep -i 'temporary password'
    ```
    Cambiala apenas entres. Después andá a `Tools → Options → Downloads` y poné `Default Save Path = /data/torrents` (sin subcarpeta — los *arr la arman solitos al asignar la descarga).
-7. **Jellyfin** — agregá bibliotecas apuntando a `/data/media/movies`, `/data/media/series`, `/data/media/music`.
-8. **Bazarr** — `Settings → Sonarr/Radarr → Connect` (pegá la API key de cada app).
-9. **Jellyseerr** — conectalo a Jellyfin (API key en `Dashboard → API Keys`) y a Sonarr/Radarr.
-10. **Wizarr** — generá links de invitación desde la UI web para sumar amigos o familia.
-11. **Pi-hole** — iniciá sesión en `:8081/admin` con la contraseña temporal que imprime el container en los logs:
+7. **Bazarr** — `Settings → Sonarr/Radarr → Connect` (pegá la API key de cada app).
+8. **Jellyseerr** — conectalo a Plex (Settings → Plex, API key desde `plex.tv/claim` o auto-detección por login) y a Sonarr/Radarr.
+9. **Wizarr** — generá links de invitación desde la UI web para sumar amigos o familia.
+10. **Pi-hole** — iniciá sesión en `:8081/admin` con la contraseña temporal que imprime el container en los logs:
     ```bash
     docker logs pihole | grep -i 'random password'
     ```
     Cambiala en `Settings → Web interface / API`. Para que funcione como DNS de tu red, apuntá el DNS de tu router (o de cada device manualmente) a la IP del Pi.
-12. **Plex** — abrí `:32400/web` e iniciá sesión con tu cuenta de Plex (o creá una) para asociar el server. Corre en `network_mode: host` para que las apps de TV/mobile lo descubran solas en la red local. Agregá una biblioteca apuntando a `/data/media`.
+11. **Plex** — abrí `:32400/web` e iniciá sesión con tu cuenta de Plex (o creá una) para asociar el server. Corre en `network_mode: host` para que las apps de TV/mobile lo descubran solas en la red local. Agregá bibliotecas apuntando a `/data/media/movies`, `/data/media/series`, `/data/media/music`.
 
 ## Operaciones diarias
 
@@ -169,7 +166,7 @@ Una vez que el stack está arriba y accesible:
 docker compose ps
 
 # Ver logs en vivo de una app
-docker compose logs -f jellyfin
+docker compose logs -f plex
 
 # Actualizar una imagen
 docker compose pull sonarr
@@ -201,7 +198,7 @@ docker compose down -v
   echo "nameserver 1.1.1.1" | sudo tee /etc/resolv.conf
   ```
   Después reintentá `docker compose up -d pihole`.
-- **Los *arr no encuentran las descargas / Jellyfin no muestra archivos nuevos.** Mirá [docs/DATA_LAYOUT.md](docs/DATA_LAYOUT.md): cada *arr necesita el Root Folder correcto y qBittorrent tiene que tener como Default Save Path `/data/torrents`.
+- **The *arr apps can't find downloads / Plex doesn't show new files.** See [docs/DATA_LAYOUT.md](docs/DATA_LAYOUT.md): each *arr needs the correct Root Folder, and qBittorrent's Default Save Path must be `/data/torrents`.
 - **Un indexer con CloudflareChallenge falla constantemente.** FlareSolverr no quedó configurado como proxy en Sonarr/Radarr. Revisá el paso 3 de [Configuración inicial](#configuración-inicial).
 
 ## Estructura del repo
@@ -209,7 +206,6 @@ docker compose down -v
 ```
 cyberdyne/
 ├── config/                 # Settings de cada app (ignorado por git)
-│   ├── jellyfin/
 │   ├── sonarr/
 │   ├── radarr/
 │   ├── jackett/
@@ -227,7 +223,7 @@ cyberdyne/
 │   │   ├── movies/
 │   │   ├── series/
 │   │   └── music/
-│   └── media/              # biblioteca final (lee Jellyfin/Bazarr)
+│   └── media/              # final library (read by Plex/Bazarr)
 │       ├── movies/
 │       ├── series/
 │       └── music/
@@ -255,8 +251,7 @@ Pull requests bienvenidos. Mantené los cambios enfocados y actualizá este READ
 - El proyecto [Servarr](https://wiki.servarr.com/) (Sonarr, Radarr, Bazarr)
 - [Jackett](https://github.com/Jackett/Jackett) — por la implementación de indexers
 - [FlareSolverr](https://github.com/FlareSolverr/FlareSolverr) — por resolver challenges de Cloudflare
-- [Jellyfin](https://jellyfin.org) — por el servidor de medios
 - [Jellyseerr](https://github.com/Fallenbagel/jellyseerr) — por la UI de pedidos
 - [Wizarr](https://github.com/Wizarrrr/wizarr) — por el sistema de invitaciones
 - [Pi-hole](https://pi-hole.net/) — por el DNS ad-blocking
-- [Plex](https://www.plex.tv/) — por el servidor de medios alternativo
+- [Plex](https://www.plex.tv/) — media server

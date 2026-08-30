@@ -31,7 +31,7 @@ main() {
     mkdir -p "${DATA_DIR}/torrents/${kind}"
   done
 
-  # Media (biblioteca final): Jellyfin y Bazarr leen de acá
+  # Media (biblioteca final): Plex y Bazarr leen de acá
   for kind in movies series music; do
     mkdir -p "${DATA_DIR}/media/${kind}"
   done

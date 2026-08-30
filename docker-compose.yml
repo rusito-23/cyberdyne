@@ -2,7 +2,7 @@ name: cyberdyne
 
 # Stack de medios auto-hospedado con acceso externo via subpaths.
 # Reverse proxy: Caddy con Caddyfile estático (./caddy/Caddyfile).
-# Acceso: http://<IP-O-DOMINIO>/{jellyfin,sonarr,radarr,bazarr,jellyseerr,wizarr,qbittorrent}
+# Acceso: http://<IP-O-DOMINIO>/{sonarr,radarr,bazarr,jellyseerr,wizarr,qbittorrent}
 #
 # Cada app necesita tener su "Base URL" / "UrlBase" seteada para que el subpath funcione.
 # Después del primer boot corré `scripts/configure-base-urls.sh` para configurarlas
@@ -145,23 +145,6 @@ services:
     networks:
       - proxy
 
-  # === Media server ===
-  jellyfin:
-    image: lscr.io/linuxserver/jellyfin:latest
-    container_name: jellyfin
-    restart: unless-stopped
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=America/Argentina/Mendoza
-      - JELLYFIN_PublishedServerUrl=http://localhost:8096
-    volumes:
-      - ${CONFIG_DIR:-./config}/jellyfin:/config
-      # Jellyfin solo escanea la biblioteca final.
-      - ${DATA_DIR:-./data}/media:/data/media
-    networks:
-      - proxy
-
   # === Media server (Plex) ===
   # Corre en network_mode: host — es lo que recomienda Plex para que el
   # discovery local (GDM) funcione bien con las apps de TV/mobile. Por eso
@@ -180,7 +163,7 @@ services:
       - VERSION=docker
     volumes:
       - ${CONFIG_DIR:-./config}/plex:/config
-      # Plex solo escanea la biblioteca final, igual que Jellyfin.
+      # Plex solo escanea la biblioteca final.
       - ${DATA_DIR:-./data}/media:/data/media
 
   # === Request management ===

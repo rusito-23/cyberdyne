@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # Configura las "Base URL" / "UrlBase" de cada app para que matcheen
-# los subpaths de Traefik (/jellyfin, /sonarr, /radarr, etc.).
+# los subpaths de Traefik (/sonarr, /radarr, etc.).
 #
 # Después de esto, cada app responde SOLO en su subpath:
-#   http://<IP>/jellyfin   → Jellyfin (con BaseUrl=/jellyfin)
 #   http://<IP>/sonarr     → Sonarr (con UrlBase=/sonarr)
 #   etc.
 #
@@ -64,25 +63,6 @@ set_urlbase_xml() {
   "
 }
 
-set_baseurl_jellyfin() {
-  # Jellyfin: <BaseUrl> puede no existir en network.xml, hay que insertarlo antes del cierre
-  local container="$1"
-  local path="$2"
-  local value="$3"
-  docker exec "$container" bash -c "
-    if grep -q '<BaseUrl>${value}</BaseUrl>' '${path}'; then
-      echo '  BaseUrl ya estaba en ${value} (no-op)'
-    elif grep -q '<BaseUrl></BaseUrl>' '${path}'; then
-      sed -i 's|<BaseUrl></BaseUrl>|<BaseUrl>${value}</BaseUrl>|' '${path}'
-      echo '  BaseUrl actualizado a ${value}'
-    else
-      # No existe el tag — insertarlo antes de </NetworkConfiguration>
-      sed -i 's|</NetworkConfiguration>|  <BaseUrl>${value}</BaseUrl>\n</NetworkConfiguration>|' '${path}'
-      echo '  BaseUrl insertado en ${value} (no existía el tag)'
-    fi
-  "
-}
-
 set_urlbase_bazarr() {
   # Bazarr: usa config.yaml, la key url_base puede no existir
   local container="$1"
@@ -134,11 +114,6 @@ main() {
   set_urlbase_bazarr bazarr /config/config/config.yaml /bazarr
   echo
 
-  # Jellyfin (network.xml — puede no tener <BaseUrl>)
-  wait_for_config jellyfin /config/network.xml 180
-  set_baseurl_jellyfin jellyfin /config/network.xml /jellyfin
-  echo
-
   # Jellyseerr: depende de la versión. Si soporta APP_BASE_URL como env var,
   # hay que setearlo en el compose antes del primer boot. Si no, queda en root.
   warn "Jellyseerr: verificar si soporta APP_BASE_URL como env var. Si no, queda accesible solo en root"
@@ -149,12 +124,11 @@ main() {
   echo
 
   # Restart apps para que apliquen cambios
-  restart_apps sonarr radarr bazarr jellyfin
+  restart_apps sonarr radarr bazarr
 
   echo
   log "============================================"
   log "  Listo. URLs de acceso:"
-  log "    http://<IP>/jellyfin    → Media server"
   log "    http://<IP>/sonarr      → TV shows"
   log "    http://<IP>/radarr      → Movies"
   log "    http://<IP>/bazarr      → Subtitles"
@@ -163,6 +137,7 @@ main() {
   log "    http://<IP>:8080        → qBittorrent (puerto dedicado)"
   log "    http://<IP>:9117        → Jackett (puerto dedicado)"
   log "    http://<IP>:8191        → FlareSolverr (puerto dedicado)"
+  log "    http://<IP>:32400/web   → Plex (puerto dedicado)"
   log "============================================"
 }
 
