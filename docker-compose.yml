@@ -32,6 +32,7 @@ services:
       # The Caddyfile lives in the repo (./caddy/) — not gitignored, so a
       # fresh clone has it available for the bind mount.
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/dashboard:/srv/dashboard:ro
       - caddy_data:/data
       - caddy_config:/config
     networks:

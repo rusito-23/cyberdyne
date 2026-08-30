@@ -35,6 +35,13 @@
         respond "ok"
     }
 
+    # Static dashboard with links to every service (caddy/dashboard/index.html)
+    @root path /
+    handle @root {
+        root * /srv/dashboard
+        file_server
+    }
+
     # Catch-all 404 with a friendly message
     handle {
         respond "Not found. Try /sonarr, /radarr, /bazarr. qBittorrent is on :8080. Jackett on :9117. FlareSolverr on :8191." 404
