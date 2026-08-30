@@ -8,6 +8,10 @@
 #
 # Idempotent: no-op if the value is already set.
 #
+# Apps that don't easily support a subpath and are left with a warning:
+#   - jellyseerr: depends on the version, we try APP_BASE_URL as an env var
+#   - wizarr: configured via the web UI on first login
+#
 # Usage:
 #   ./scripts/configure-base-urls.sh
 #
@@ -110,6 +114,16 @@ main() {
   set_urlbase_bazarr bazarr /config/config/config.yaml /bazarr
   echo
 
+  # Jellyseerr: depends on the version. If it supports APP_BASE_URL as an
+  # env var, set it in the compose file before the first boot. Otherwise
+  # it stays reachable only at root.
+  warn "Jellyseerr: check whether it supports APP_BASE_URL as an env var. If not, it stays reachable only at root"
+  echo
+
+  # Wizarr: uses SQLite, not easily editable from here
+  warn "Wizarr: configure the base URL manually on first login (Settings → General → Application URL)"
+  echo
+
   restart_apps sonarr radarr bazarr
 
   echo
@@ -118,9 +132,12 @@ main() {
   log "    http://<IP>/sonarr      → TV shows"
   log "    http://<IP>/radarr      → Movies"
   log "    http://<IP>/bazarr      → Subtitles"
+  log "    http://<IP>/jellyseerr  → Requests (if subpath is supported)"
+  log "    http://<IP>/wizarr      → Invitations (configure manually)"
   log "    http://<IP>:8080        → qBittorrent (dedicated port)"
   log "    http://<IP>:9117        → Jackett (dedicated port)"
   log "    http://<IP>:8191        → FlareSolverr (dedicated port)"
+  log "    http://<IP>:32400/web   → Plex (dedicated port)"
   log "============================================"
 }
 

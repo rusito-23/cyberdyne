@@ -24,12 +24,29 @@
         reverse_proxy bazarr:6767
     }
 
+    # Wizarr custom build from pablokbs, with APPLICATION_ROOT=/wizarr.
+    @wizarr path /wizarr*
+    handle @wizarr {
+        reverse_proxy wizarr:5690
+    }
+
     # === Apps WITHOUT subpath support (prefix stripped) ===
 
     # qBittorrent doesn't route through here: it's exposed directly on
     # :8080 of the host (see docker-compose.yml). No stable subpath
     # support because its internal URLs are relative and break once
     # Caddy strips the prefix.
+
+    # Jellyseerr: its internal redirect goes to /setup, ignoring the subpath.
+    @jellyseerr path /jellyseerr*
+    handle_path /jellyseerr* {
+        reverse_proxy jellyseerr:5055
+    }
+    # Catch-all for Jellyseerr's internal assets/redirects.
+    @jellyseerr-assets path /api/* /_next/* /logo* /favicon* /apple-* /site.webmanifest /setup* /login* /css/* /js/* /images/*
+    handle @jellyseerr-assets {
+        reverse_proxy jellyseerr:5055
+    }
 
     handle /healthz {
         respond "ok"
@@ -44,6 +61,6 @@
 
     # Catch-all 404 with a friendly message
     handle {
-        respond "Not found. Try /sonarr, /radarr, /bazarr. qBittorrent is on :8080. Jackett on :9117. FlareSolverr on :8191." 404
+        respond "Not found. Try /sonarr, /radarr, /bazarr, /jellyseerr, /wizarr. qBittorrent is on :8080. Jackett on :9117. FlareSolverr on :8191. Plex is on :32400." 404
     }
 }

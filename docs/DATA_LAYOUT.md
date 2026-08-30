@@ -12,7 +12,7 @@ data/
 │   ├── movies/
 │   ├── series/
 │   └── music/
-└── media/                 # Final library.
+└── media/                 # Final library. Plex and Bazarr read from here.
     ├── movies/
     ├── series/
     └── music/
@@ -29,12 +29,13 @@ Each app only sees the part of `data/` it needs:
 | **Sonarr** | `/data` | `${DATA_DIR:-./data}` | Reads torrents, imports into media. Needs the whole tree for hardlinks. |
 | **Radarr** | `/data` | `${DATA_DIR:-./data}` | Same as Sonarr. |
 | **qBittorrent** | `/data/torrents` | `${DATA_DIR:-./data}/torrents` | Only writes downloads. Never touches media. |
+| **Plex** | `/data/media` | `${DATA_DIR:-./data}/media` | Reads the final library. |
 | **Bazarr** | `/data/media` | `${DATA_DIR:-./data}/media` | Reads the final library to fetch subtitles. |
-| Jackett, FlareSolverr, Caddy | — | — | Don't access `data/`. |
+| Jackett, FlareSolverr, Jellyseerr, Wizarr, Caddy | — | — | Don't access `data/`. |
 
 ## Why not mount `/data/movies` and `/data/downloads` separately?
 
-That's the shortcut most quick-start guides suggest. It works, but has a real cost:
+That's the shortcut most quick-start guides suggest, and it's what this stack used to do. It works, but has a real cost:
 
 - **No hardlinks**. When Radarr moves a finished file from `downloads/` to `movies/`, Docker treats the two mounts as separate filesystems even though they aren't. Radarr falls back to **copy + delete**: the file temporarily exists twice on disk, you pay double I/O, and the move isn't atomic.
 - **No atomic moves**. If the process dies mid-move, you're left with a half-copied file in `movies/` and an orphan in `downloads/`.
@@ -50,6 +51,7 @@ Once the stack is up, configure each app's Root Folders to match:
 - **Sonarr**: Settings → Media Management → Root Folders → add `/data/series`
 - **Radarr**: Settings → Media Management → Root Folders → add `/data/movies`
 - **qBittorrent**: Tools → Options → Downloads → Default Save Path → `/data/torrents`
+- **Plex**: Add Library → Movies `/data/media/movies`, TV Shows `/data/media/series`, Music `/data/media/music`
 - **Bazarr**: Settings → Sonarr/Radarr → Folder mappings with the same paths
 
 ## Adding a new media type
@@ -86,7 +88,7 @@ bash scripts/configure-base-urls.sh
 docker compose restart
 ```
 
-Then update the Root Folders inside Sonarr/Radarr to `/data/series` and `/data/movies` respectively. Bazarr needs no changes (its `/data/media` mount target didn't change).
+Then update the Root Folders inside Sonarr/Radarr to `/data/series` and `/data/movies` respectively. Plex and Bazarr need no changes (their `/data/media` mount target didn't change).
 
 ## Source
 

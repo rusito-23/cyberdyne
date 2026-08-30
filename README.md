@@ -9,6 +9,9 @@ My Raspberry Pi home server config: media automation and network-wide ad-blockin
 - **Jackett** + **FlareSolverr** — indexer manager and Cloudflare challenge solver
 - **Bazarr** — automatic subtitles
 - **qBittorrent** — torrent client
+- **Plex** — media server
+- **Jellyseerr** — request UI
+- **Wizarr** — user invitations
 - **Pi-hole** — network-wide DNS ad-blocking
 
 ## Setup

@@ -1,8 +1,8 @@
 name: cyberdyne
 
-# Self-hosted media automation stack with external access via subpaths.
+# Self-hosted media + home services stack with external access via subpaths.
 # Reverse proxy: Caddy with a static Caddyfile (./caddy/Caddyfile).
-# Access: http://<IP-OR-DOMAIN>/{sonarr,radarr,bazarr}
+# Access: http://<IP-OR-DOMAIN>/{sonarr,radarr,bazarr,jellyseerr,wizarr,qbittorrent}
 #
 # Each app needs its "Base URL" / "UrlBase" set for the subpath to work.
 # After the first boot, run `scripts/configure-base-urls.sh` to configure
@@ -141,6 +141,57 @@ services:
       # qBittorrent only writes to /data/torrents. The *arr apps move
       # finished files to /data/media via hardlink + delete the original.
       - ${DATA_DIR:-./data}/torrents:/data/torrents
+    networks:
+      - proxy
+
+  # === Media server (Plex) ===
+  # Runs in network_mode: host — Plex's recommended setup so local
+  # discovery (GDM) works for TV/mobile apps. Because of this it doesn't
+  # join the `proxy` network or go through Caddy (no subpath support either).
+  # First access: open http://<PI-IP>:32400/web and log in with your Plex
+  # account to claim the server (no PLEX_CLAIM needed).
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Mendoza
+      - VERSION=docker
+    volumes:
+      - ${CONFIG_DIR:-./config}/plex:/config
+      - ${DATA_DIR:-./data}/media:/data/media
+
+  # === Request management ===
+  jellyseerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    init: true
+    container_name: jellyseerr
+    restart: unless-stopped
+    environment:
+      - TZ=America/Argentina/Mendoza
+      - LOG_LEVEL=info
+    volumes:
+      - ${CONFIG_DIR:-./config}/jellyseerr:/app/config
+    networks:
+      - proxy
+
+  # === User invitation system ===
+  # Custom image from pablokbs with a working APPLICATION_ROOT
+  # (commits on top of upstream wizarr from June 2026).
+  wizarr:
+    image: docker.io/pablokbs/wizarr
+    container_name: wizarr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Mendoza
+      - APPLICATION_ROOT=/wizarr
+    volumes:
+      - ${CONFIG_DIR:-./config}/wizarr:/config
     networks:
       - proxy
 
