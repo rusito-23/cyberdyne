@@ -144,6 +144,29 @@ services:
     networks:
       - proxy
 
+  # === DNS ad-blocking ===
+  # Pi-hole is exposed DIRECTLY on :53 (DNS) and :8081 (web UI), bypassing
+  # Caddy (no subpath support). To use it as your network's DNS, point your
+  # router's (or each device's) DNS at the Pi's IP. If the host runs
+  # systemd-resolved, it'll fight over port 53 — disable it first (see
+  # README) before bringing this service up.
+  pihole:
+    image: pihole/pihole:latest
+    container_name: pihole
+    restart: unless-stopped
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "8081:80/tcp"
+    environment:
+      - TZ=America/Argentina/Mendoza
+    volumes:
+      - ${CONFIG_DIR:-./config}/pihole:/etc/pihole
+    cap_add:
+      - NET_ADMIN
+    networks:
+      - proxy
+
 networks:
   proxy:
     name: proxy

@@ -1,6 +1,6 @@
 # Cyberdyne
 
-My Raspberry Pi home server config: automated TV/movie downloading, running behind a single Caddy reverse proxy. Grows as I add more self-hosted services over time.
+My Raspberry Pi home server config: media automation and network-wide ad-blocking DNS, running behind a single Caddy reverse proxy. Grows as I add more self-hosted services over time.
 
 ## Components
 
@@ -9,6 +9,7 @@ My Raspberry Pi home server config: automated TV/movie downloading, running behi
 - **Jackett** + **FlareSolverr** — indexer manager and Cloudflare challenge solver
 - **Bazarr** — automatic subtitles
 - **qBittorrent** — torrent client
+- **Pi-hole** — network-wide DNS ad-blocking
 
 ## Setup
 
