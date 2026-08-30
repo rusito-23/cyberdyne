@@ -181,6 +181,9 @@ services:
   # === User invitation system ===
   # Custom image from pablokbs with a working APPLICATION_ROOT
   # (commits on top of upstream wizarr from June 2026).
+  # Wizarr's actual database/storage live at /data, not /config — mounting
+  # /config (as this used to) leaves everything in the container's
+  # writable layer, lost on any recreate.
   wizarr:
     image: docker.io/pablokbs/wizarr
     container_name: wizarr
@@ -191,7 +194,7 @@ services:
       - TZ=America/Argentina/Mendoza
       - APPLICATION_ROOT=/wizarr
     volumes:
-      - ${CONFIG_DIR:-./config}/wizarr:/config
+      - ${CONFIG_DIR:-./config}/wizarr:/data
     networks:
       - proxy
 
