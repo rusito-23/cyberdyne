@@ -1,212 +1,215 @@
-# Indexers, Jackett y FlareSolverr
+# Indexers, Jackett, and FlareSolverr
 
-> Este documento cubre la parte que se sacó del video de YouTube sobre el stack.
-> YouTube no explica exactamente qué clip infringe sus normas, así que la idea
-> es dejar todo el setup detallado acá, en texto, donde sí se puede describir
-> paso a paso sin ambigüedad.
+> This document covers the part that got cut from the YouTube video about
+> the stack. YouTube doesn't explain exactly which clip violates its
+> guidelines, so the idea is to keep the full detailed setup here, in text,
+> where it can be described step by step without ambiguity.
 
-Este doc asume que ya tenés el stack levantado (ver `README.md` → Inicio rápido).
-Si Jackett y FlareSolverr están corriendo, seguimos.
+This doc assumes the stack is already up (see `README.md` → Setup). If
+Jackett and FlareSolverr are running, we're good to go.
 
 ---
 
-## Por qué hablamos en URLs internas
+## Why we talk in internal URLs
 
-Todos los servicios del stack comparten la red Docker `proxy`. Eso significa
-que **adentro de la red, los containers se ven por nombre**. Si Radarr quiere
-hablarle a Jackett, no tiene que salir a Internet ni pasar por Caddy: hace
-`http://jackett:9117` y listo.
+Every service in the stack shares the `proxy` Docker network. That means
+**containers can see each other by name inside the network**. If Radarr
+wants to talk to Jackett, it doesn't need to go out to the Internet or
+through Caddy: it just hits `http://jackett:9117` and that's it.
 
-Esa es la URL que vamos a usar en todos lados:
+That's the URL we'll use everywhere:
 
-| Desde | A Jackett | A FlareSolverr |
+| From | To Jackett | To FlareSolverr |
 | --- | --- | --- |
-| Desde tu navegador | `http://<tu-servidor>:9117` | `http://<tu-servidor>:8191` |
-| Desde un *arr (Sonarr/Radarr) | `http://jackett:9117` | `http://flaresolverr:8191` |
-| Desde Jackett hacia FlareSolverr | — | `http://flaresolverr:8191/` |
+| From your browser | `http://<your-server>:9117` | `http://<your-server>:8191` |
+| From a *arr (Sonarr/Radarr) | `http://jackett:9117` | `http://flaresolverr:8191` |
+| From Jackett to FlareSolverr | — | `http://flaresolverr:8191/` |
 
-Si usás la URL externa (`<tu-servidor>:9117`) desde adentro de los *arr,
-funciona también pero pasás por Caddy/red pública innecesariamente. La URL
-interna es más rápida y no depende de que el proxy esté vivo.
+Using the external URL (`<your-server>:9117`) from inside the *arr apps
+also works, but it needlessly goes through Caddy/the public network. The
+internal URL is faster and doesn't depend on the proxy being up.
 
 ---
 
-## 1. Agregar indexers en Jackett
+## 1. Adding indexers in Jackett
 
-1. Abrí Jackett en `http://<tu-servidor>:9117`.
-2. Si es la primera vez, te pide crear una contraseña de admin. **Anotala** —
-   es la misma que después te va a pedir cada vez que entres.
-3. Click en **+ Add Indexer**.
-4. Buscá el tracker que querés agregar (hay cientos: 1337x, RARBG, YTS, etc.).
-5. Click en él → se abre la pantalla de configuración:
-   - **Configurar site**: si el tracker pide login (usuario y contraseña), llená
-     los campos. Si es público, muchos no piden nada.
-   - **Configurar Torznab**: podés setear capacidades extras (categorías,
-     idioma, etc.). Para empezar dejá los defaults.
-6. Click **OK** y volvés a la lista principal.
+1. Open Jackett at `http://<your-server>:9117`.
+2. First time in, it asks you to set an admin password. **Write it down** —
+   it's the same one it'll ask for every time you log in.
+3. Click **+ Add Indexer**.
+4. Search for the tracker you want to add (there are hundreds: 1337x, RARBG,
+   YTS, etc.).
+5. Click it → the configuration screen opens:
+   - **Configure site**: if the tracker requires login (username and
+     password), fill in the fields. Public trackers often need nothing.
+   - **Configure Torznab**: you can set extra capabilities (categories,
+     language, etc.). Leave the defaults to start.
+6. Click **OK** and you're back at the main list.
 
-Probá que funcione haciendo click en el indexer que acabás de agregar. En la
-lista de indexers, el ícono de estado a la izquierda tiene que estar verde.
-Si está rojo/amarillo, mirá el JSON de respuesta que aparece abajo del botón
-"Download Select" — ahí te dice qué se rompió.
+Test that it works by clicking the indexer you just added. In the indexer
+list, the status icon on the left should be green. If it's red/yellow, check
+the JSON response shown below the "Download Select" button — it tells you
+what broke.
 
-### Cómo obtener el Torznab feed URL
+### Getting the Torznab feed URL
 
-Para cada indexer que quieras usar desde los *arr, necesitás la URL del feed
-Torznab:
+For each indexer you want to use from the *arr apps, you need its Torznab
+feed URL:
 
-1. En la lista principal, buscá el indexer.
-2. Click derecho sobre él → **Copy Feed URL** (o el botón "Copy" al lado del
-   feed Torznab que aparece en la lista).
-3. Te queda algo así:
+1. In the main list, find the indexer.
+2. Right-click it → **Copy Feed URL** (or the "Copy" button next to the
+   Torznab feed shown in the list).
+3. You'll get something like:
 
    ```
    http://jackett:9117/api/v2.0/indexers/1337x/results/torznab/api?apikey=ABC123...
    ```
 
-   Esa URL es la que después pegás en Sonarr/Radarr.
+   That's the URL you'll paste into Sonarr/Radarr.
 
-### API key de Jackett
+### Jackett API key
 
-La necesitás para que los *arr se autentiquen contra el feed. Está arriba a la
-derecha en la UI de Jackett, en **Dashboard → API Key**. Es la misma para todos
-los indexers, no es por-indexer.
+You need it so the *arr apps can authenticate against the feed. It's in the
+top-right of the Jackett UI, under **Dashboard → API Key**. It's the same
+key for every indexer, not per-indexer.
 
 ---
 
-## 2. Configurar FlareSolverr en Jackett
+## 2. Configuring FlareSolverr in Jackett
 
-Muchos trackers importantes (1337x, RARBG, The Pirate Bay y un montón más)
-ponen un **Cloudflare Challenge** delante. Sin algo que lo resuelva, Jackett
-no puede bajar la página y parsear los resultados. Ahí entra FlareSolverr:
-un proxy que usa un Chrome headless para resolver el challenge y devolverte
-el HTML limpio.
+Many major trackers (1337x, RARBG, The Pirate Bay, and plenty more) put a
+**Cloudflare Challenge** in front. Without something to solve it, Jackett
+can't fetch the page and parse results. That's where FlareSolverr comes in:
+a proxy that uses a headless Chrome to solve the challenge and hand back
+clean HTML.
 
-> **TL;DR**: si tu indexer favorito falla con un error tipo "Cloudflare
-> detected" o "403 Forbidden" en los logs de Jackett, este paso es lo que te
-> falta.
+> **TL;DR**: if your favorite indexer fails with something like "Cloudflare
+> detected" or "403 Forbidden" in Jackett's logs, this step is what you're
+> missing.
 
-### Configuración por indexer (lo recomendado)
+### Per-indexer configuration (recommended)
 
-1. En Jackett, click sobre el indexer que tiene el problema (no "Add Indexer"
-   sino click en el existente).
-2. Bajá hasta el final del formulario. Hay un selector que dice **FlareSolverr
-   Proxy** con valores como `Disabled` y `FlareSolverr`.
-3. Cambialo a **FlareSolverr**.
-4. Aparece un campo para poner la URL. Poné:
+1. In Jackett, click the indexer having the problem (not "Add Indexer" —
+   click the existing one).
+2. Scroll to the bottom of the form. There's a dropdown labeled
+   **FlareSolverr Proxy** with values like `Disabled` and `FlareSolverr`.
+3. Change it to **FlareSolverr**.
+4. A field appears for the URL. Enter:
 
    ```
    http://flaresolverr:8191/
    ```
 
-   (Notá la barra al final, algunos trackers se quejan si no está.)
-5. Click **OK** y volvé a probar el indexer.
+   (Note the trailing slash — some trackers complain without it.)
+5. Click **OK** and test the indexer again.
 
-### Configuración global (opcional)
+### Global configuration (optional)
 
-Si querés que FlareSolverr esté prendido por default para todos los indexers
-que lo soporten, podés setear la variable de entorno al levantar el container:
+If you want FlareSolverr on by default for every indexer that supports it,
+you can set the environment variable when the container starts:
 
 ```yaml
-# docker-compose.yml, en el servicio 'jackett'
+# docker-compose.yml, in the 'jackett' service
 environment:
   - FlareSolverrUrl=http://flaresolverr:8191/
 ```
 
-Después reiniciá Jackett y los indexers nuevos van a usarlo por default. Los
-que ya tenés configurados mantienen su config individual.
+Then restart Jackett and any new indexers will use it by default. Ones you
+already configured keep their individual settings.
 
 ---
 
-## 3. Configurar los indexers en Radarr y Sonarr
+## 3. Configuring indexers in Radarr and Sonarr
 
-Ahora viene la parte que conecta todo. Para cada indexer que quieras usar en
-Radarr (pelis) y Sonarr (series), repetís este procedimiento.
+Now the part that ties everything together. Repeat this for every indexer
+you want to use in Radarr (movies) and Sonarr (TV).
 
-### En Sonarr (series)
+### In Sonarr (TV)
 
-1. Abrí Sonarr en `http://<tu-servidor>/sonarr`.
-2. **Settings → Indexers → Add → Torznab** (no Prowlarr ni Newznab; el feed de
-   Jackett es Torznab).
-3. Llená el formulario:
+1. Open Sonarr at `http://<your-server>/sonarr`.
+2. **Settings → Indexers → Add → Torznab** (not Prowlarr or Newznab —
+   Jackett's feed is Torznab).
+3. Fill in the form:
 
-   | Campo | Valor |
+   | Field | Value |
    | --- | --- |
-   | **Name** | Lo que quieras (ej: `1337x via Jackett`). |
+   | **Name** | Whatever you want (e.g. `1337x via Jackett`). |
    | **Enable** | `ON` |
-   | **URL** | El Torznab feed URL que copiaste de Jackett. **Tiene que empezar con `http://jackett:9117/...`**, no con `http://<tu-servidor>:9117/...`. Si tenés la URL pública, reemplazá la primera parte por `jackett:9117`. |
-   | **API Key** | La API key de Jackett (Dashboard → API Key). |
-   | **Categories** | `5000, 5020, 5030, 5040, 5045, 5050, 5060` (estándar para series; podés sumar/sacar). |
-   | **Anime Categories** | `5070` si querés que aparezca anime en series. |
-   | **Tags** | Dejá vacío por ahora. Lo de `flaresolverr` es solo si configuraste FlareSolverr como Indexer Proxy en el *arr (ver bonus más abajo), no es obligatorio. |
-   | **Anime Standard Format Search** | `ON` solo si vas a usar anime. |
+   | **URL** | The Torznab feed URL you copied from Jackett. **It must start with `http://jackett:9117/...`**, not `http://<your-server>:9117/...`. If you have the public URL, replace the first part with `jackett:9117`. |
+   | **API Key** | Jackett's API key (Dashboard → API Key). |
+   | **Categories** | `5000, 5020, 5030, 5040, 5045, 5050, 5060` (standard for TV; add/remove as needed). |
+   | **Anime Categories** | `5070` if you want anime to show up under TV. |
+   | **Tags** | Leave empty for now. The `flaresolverr` tag is only if you configured FlareSolverr as an Indexer Proxy in the *arr app (see bonus section below) — it's not required. |
+   | **Anime Standard Format Search** | `ON` only if you'll be using anime. |
 
-4. Click **Test**. Si dice "Test was successful", guardá.
-5. Repetí para cada indexer que quieras tener disponible.
+4. Click **Test**. If it says "Test was successful", save.
+5. Repeat for every indexer you want available.
 
-### En Radarr (pelis)
+### In Radarr (movies)
 
 1. **Settings → Indexers → Add → Torznab**.
-2. Mismos campos, con estos cambios:
+2. Same fields, with these changes:
 
-   | Campo | Valor |
+   | Field | Value |
    | --- | --- |
-   | **URL** | Igual: `http://jackett:9117/api/v2.0/indexers/.../torznab/...` |
-   | **API Key** | La API key de Jackett. |
-   | **Categories** | `2000, 2010, 2020, 2030, 2040, 2045, 2050, 2060` (pelis, incluidas HD y UHD). |
-   | **Tags** | Dejá vacío. |
+   | **URL** | Same pattern: `http://jackett:9117/api/v2.0/indexers/.../torznab/...` |
+   | **API Key** | Jackett's API key. |
+   | **Categories** | `2000, 2010, 2020, 2030, 2040, 2045, 2050, 2060` (movies, including HD and UHD). |
+   | **Tags** | Leave empty. |
 
-3. **Test** y guardá.
+3. **Test** and save.
 
 ---
 
-## Bonus: FlareSolverr como Indexer Proxy en el *arr
+## Bonus: FlareSolverr as an Indexer Proxy in the *arr apps
 
-En lugar de configurar FlareSolverr adentro de Jackett, podés configurarlo en
-el *arr como Indexer Proxy. Las dos formas funcionan; este approach tiene la
-ventaja de que todos los indexers configurados como Torznab se benefician del
-proxy sin tener que tocar cada uno, y la desventaja de que el *arr tiene que
-esperar que FlareSolverr resuelva el challenge antes de pedirle los resultados
-a Jackett (un round trip más).
+Instead of configuring FlareSolverr inside Jackett, you can configure it in
+the *arr app as an Indexer Proxy. Both approaches work; this one has the
+advantage that every indexer configured as Torznab benefits from the proxy
+without touching each one individually, and the disadvantage that the *arr
+app has to wait for FlareSolverr to solve the challenge before it can ask
+Jackett for results (one extra round trip).
 
-Si querés ir por esta vía:
+If you want to go this route:
 
-1. En el *arr: **Settings → Indexer Proxies → Add → FlareSolverr**.
-2. **Host**: `flaresolverr` (el nombre del container en la red `proxy`).
+1. In the *arr app: **Settings → Indexer Proxies → Add → FlareSolverr**.
+2. **Host**: `flaresolverr` (the container's name on the `proxy` network).
 3. **Port**: `8191`.
-4. **URL Base**: dejá vacío.
-5. Click **Save**. Te lleva al paso de **Tags** — ahí tildá todos los indexers
-   que quieras que pasen por el proxy.
-6. Cada indexer que tildaste hereda la config y va a usar FlareSolverr para
-   los challenges.
+4. **URL Base**: leave empty.
+5. Click **Save**. It takes you to the **Tags** step — check every indexer
+   you want routed through the proxy.
+6. Each indexer you checked inherits the config and will use FlareSolverr
+   for challenges.
 
-> **Mi recomendación**: configurá FlareSolverr en Jackett (sección 2 de este
-> doc). Es más simple, más rápido, y los challenges se resuelven una vez y
-> quedan cacheados para todos los indexers que pidan lo mismo. El approach
-> del *arr como Indexer Proxy es útil solo si tenés indexers que no están
-> adentro de Jackett (tipo Prowlarr o Newznab directos).
+> **My recommendation**: configure FlareSolverr in Jackett (section 2 of
+> this doc). It's simpler, faster, and challenges are solved once and
+> cached for every indexer that asks for the same thing. The *arr-as-Indexer-
+> Proxy approach is only useful if you have indexers that aren't inside
+> Jackett (like direct Prowlarr or Newznab feeds).
 
 ---
 
 ## Troubleshooting
 
-- **"Test was successful" pero las búsquedas devuelven 0 resultados.** El indexer
-  funciona pero no tiene feeds para lo que buscás. Probá con algo popular (un
-  release conocido) para descartar.
-- **Los indexers marcados en verde en Jackett fallan en el *arr.** Casi siempre
-  es que pegaste la URL externa (`http://<tu-servidor>:9117/...`) en vez de la
-  interna (`http://jackett:9117/...`). Editá el indexer y corregila.
-- **Error "401 Unauthorized" en los indexers del *arr.** La API key de Jackett
-  está mal copiada o regenerada. Volvé a copiarla del Dashboard de Jackett.
-- **Jackett no responde a `http://jackett:9117` desde el *arr.** Los dos
-  containers tienen que estar en la misma red Docker. Acá lo están (red
-  `proxy`), así que si falla es que algo custom lo rompió. Verificá con
-  `docker inspect <container> | grep Networks`.
-- **Cloudflare challenge sigue sin resolverse después de configurar
-  FlareSolverr.** Logs: `docker logs flaresolverr`. Si ves errores de Chrome
-  headless, puede ser que el container no tenga suficiente RAM (FlareSolverr
-  levanta un Chromium real, pide ~300-500 MB por request). Sumá RAM al host o
-  bajá la concurrencia de indexers.
-- **Jackett devuelve error "Indexer download error: Connection refused".** El
-  servicio de FlareSolverr no está corriendo o está en otra red. Verificá con
-  `docker compose ps flaresolverr`.
+- **"Test was successful" but searches return 0 results.** The indexer
+  works but has no feeds for what you're searching. Try something popular
+  (a well-known release) to rule this out.
+- **Indexers show green in Jackett but fail in the *arr app.** Almost
+  always means you pasted the external URL (`http://<your-server>:9117/...`)
+  instead of the internal one (`http://jackett:9117/...`). Edit the indexer
+  and fix it.
+- **"401 Unauthorized" error on the *arr app's indexers.** Jackett's API key
+  was copied wrong or got regenerated. Copy it again from Jackett's
+  Dashboard.
+- **Jackett doesn't respond at `http://jackett:9117` from the *arr app.**
+  Both containers need to be on the same Docker network. They are here (the
+  `proxy` network), so if it's failing, something custom broke it. Check
+  with `docker inspect <container> | grep Networks`.
+- **Cloudflare challenge still isn't solved after configuring
+  FlareSolverr.** Check logs: `docker logs flaresolverr`. Chrome headless
+  errors can mean the container doesn't have enough RAM (FlareSolverr spins
+  up a real Chromium, needing ~300-500 MB per request). Add RAM to the host
+  or lower indexer concurrency.
+- **Jackett returns "Indexer download error: Connection refused".** The
+  FlareSolverr service isn't running or is on a different network. Check
+  with `docker compose ps flaresolverr`.

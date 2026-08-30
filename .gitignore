@@ -1,4 +1,4 @@
-# Configs y data son grandes / sensibles
+# Configs and data are large / sensitive
 config/
 data/
 *.log

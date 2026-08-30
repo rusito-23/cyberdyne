@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Crea la estructura de directorios de data/ siguiendo la convención
-# de TRaSH Guides (https://trash-guides.info/File-and-Folder-Structure/How-to-set-up/Docker/).
+# Creates the data/ directory structure following the TRaSH Guides
+# convention (https://trash-guides.info/File-and-Folder-Structure/How-to-set-up/Docker/).
 #
-# Por qué existe este script: data/ está en .gitignore (los archivos de medios
-# son grandes y personales), entonces la estructura no se puede clonar del repo.
-# Este script la recrea de cero.
+# Why this script exists: data/ is gitignored (media files are large and
+# personal), so the structure can't be cloned from the repo. This script
+# recreates it from scratch.
 #
-# Uso:
-#   ./scripts/init-data-dirs.sh           # usa ./data (default)
+# Usage:
+#   ./scripts/init-data-dirs.sh           # uses ./data (default)
 #   DATA_DIR=/srv/media/data ./scripts/init-data-dirs.sh
 #
-# Idempotente: no rompe si las carpetas ya existen.
+# Idempotent: safe to run even if the folders already exist.
 
 set -euo pipefail
 
@@ -24,19 +24,19 @@ log()  { printf "${GREEN}[+]${NC} %s\n" "$*"; }
 warn() { printf "${YELLOW}[!]${NC} %s\n" "$*"; }
 
 main() {
-  log "Creando estructura de data/ en ${DATA_DIR} (layout TRaSH Guides)"
+  log "Creating data/ structure at ${DATA_DIR} (TRaSH Guides layout)"
 
-  # Torrents (staging): qBittorrent escribe acá, *arr mueven los archivos terminados a media/
+  # Torrents (staging): qBittorrent writes here, *arr moves finished files to media/
   for kind in movies series music; do
     mkdir -p "${DATA_DIR}/torrents/${kind}"
   done
 
-  # Media (biblioteca final): Plex y Bazarr leen de acá
+  # Media (final library): Plex and Bazarr read from here
   for kind in movies series music; do
     mkdir -p "${DATA_DIR}/media/${kind}"
   done
 
-  log "Estructura creada:"
+  log "Structure created:"
   if command -v tree >/dev/null 2>&1; then
     tree -L 2 "${DATA_DIR}"
   else
@@ -44,8 +44,8 @@ main() {
   fi
 
   echo
-  warn "Próximo paso: docker compose up -d"
-  warn "Luego: bash scripts/configure-base-urls.sh (para los subpaths)"
+  warn "Next step: docker compose up -d"
+  warn "Then: bash scripts/configure-base-urls.sh (for the subpaths)"
 }
 
 main "$@"

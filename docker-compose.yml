@@ -1,26 +1,26 @@
 name: cyberdyne
 
-# Stack de medios auto-hospedado con acceso externo via subpaths.
-# Reverse proxy: Caddy con Caddyfile estático (./caddy/Caddyfile).
-# Acceso: http://<IP-O-DOMINIO>/{sonarr,radarr,bazarr,jellyseerr,wizarr,qbittorrent}
+# Self-hosted media + home services stack with external access via subpaths.
+# Reverse proxy: Caddy with a static Caddyfile (./caddy/Caddyfile).
+# Access: http://<IP-OR-DOMAIN>/{sonarr,radarr,bazarr,jellyseerr,wizarr,qbittorrent}
 #
-# Cada app necesita tener su "Base URL" / "UrlBase" seteada para que el subpath funcione.
-# Después del primer boot corré `scripts/configure-base-urls.sh` para configurarlas
-# y reiniciar las apps.
+# Each app needs its "Base URL" / "UrlBase" set for the subpath to work.
+# After the first boot, run `scripts/configure-base-urls.sh` to configure
+# them and restart the apps.
 #
 # ─── Paths ────────────────────────────────────────────────────────────────────
-# Las rutas de host (./config, ./data) se configuran vía variables de entorno
-# en un archivo `.env` al lado de este compose. Copiá `.env.example` como `.env`
-# y editá los valores si querés mover las carpetas (ej. a /srv/cyberdyne).
-# Defaults apuntan a ./config y ./data relativos al compose, igual que antes.
+# Host paths (./config, ./data) are configured via environment variables
+# in a `.env` file next to this compose file. Copy `.env.example` to `.env`
+# and edit the values if you want to move the folders (e.g. to /srv/cyberdyne).
+# Defaults point to ./config and ./data relative to the compose file.
 #
 # ─── Data layout (TRaSH Guides) ────────────────────────────────────────────────
-# La estructura interna sigue la convención de TRaSH Guides para que los *arr
-# puedan usar hardlinks y moves atómicos entre /data/torrents y /data/media.
-# Ver docs/DATA_LAYOUT.md o https://trash-guides.info/File-and-Folder-Structure/How-to-set-up/Docker/
+# The internal structure follows the TRaSH Guides convention so the *arr apps
+# can use hardlinks and atomic moves between /data/torrents and /data/media.
+# See docs/DATA_LAYOUT.md or https://trash-guides.info/File-and-Folder-Structure/How-to-set-up/Docker/
 
 services:
-  # === Reverse proxy (Caddy con Caddyfile estático) ===
+  # === Reverse proxy (Caddy with a static Caddyfile) ===
   caddy:
     image: caddy:2.10-alpine
     container_name: caddy
@@ -29,8 +29,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      # Caddyfile vive en el repo (./caddy/) — no se ignora por .gitignore,
-      # así un clon fresco tiene el archivo disponible para el bind mount.
+      # The Caddyfile lives in the repo (./caddy/) — not gitignored, so a
+      # fresh clone has it available for the bind mount.
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./caddy/dashboard:/srv/dashboard:ro
       - caddy_data:/data
@@ -39,8 +39,8 @@ services:
       - proxy
 
   # === Indexer manager ===
-  # Jackett se expone DIRECTO en :9117 del host. Lo usan Sonarr/Radarr
-  # via http://jackett:9117 adentro de la red Docker (no requiere subpath).
+  # Jackett is exposed DIRECTLY on :9117. Sonarr/Radarr reach it via
+  # http://jackett:9117 over the internal Docker network (no subpath needed).
   jackett:
     image: lscr.io/linuxserver/jackett:latest
     container_name: jackett
@@ -58,8 +58,8 @@ services:
     networks:
       - proxy
 
-  # === FlareSolverr (resuelve challenges de Cloudflare para indexers) ===
-  # Se expone directo en :8191 del host, sin pasar por Caddy.
+  # === FlareSolverr (solves Cloudflare challenges for indexers) ===
+  # Exposed directly on :8191, bypassing Caddy.
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
     container_name: flaresolverr
@@ -82,8 +82,8 @@ services:
       - TZ=America/Argentina/Mendoza
     volumes:
       - ${CONFIG_DIR:-./config}/sonarr:/config
-      # TRaSH layout: Sonarr ve /data entero para que los hardlinks funcionen
-      # y los moves desde /data/torrents a /data/media sean atómicos.
+      # TRaSH layout: Sonarr sees all of /data so hardlinks work and moves
+      # from /data/torrents to /data/media are atomic.
       - ${DATA_DIR:-./data}:/data
     networks:
       - proxy
@@ -114,7 +114,6 @@ services:
       - TZ=America/Argentina/Mendoza
     volumes:
       - ${CONFIG_DIR:-./config}/bazarr:/config
-      # Bazarr solo necesita ver la biblioteca final.
       - ${DATA_DIR:-./data}/media:/data/media
     depends_on:
       - radarr
@@ -123,9 +122,9 @@ services:
       - proxy
 
   # === Downloads ===
-  # qBittorrent se expone DIRECTO en :8080 del host, sin pasar por Caddy.
-  # No soporta subpath de forma estable (las URLs internas del HTML son relativas
-  # y rompen cuando Caddy strippea el prefijo). Es la práctica estándar.
+  # qBittorrent is exposed DIRECTLY on :8080, bypassing Caddy. It doesn't
+  # support a stable subpath (its HTML uses relative internal URLs that
+  # break once Caddy strips the prefix) — this is the standard practice.
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
@@ -139,18 +138,18 @@ services:
       - WEBUI_PORT=8080
     volumes:
       - ${CONFIG_DIR:-./config}/qbittorrent:/config
-      # qBittorrent solo escribe en /data/torrents. Los *arr mueven los archivos
-      # terminados a /data/media vía hardlink + delete del original.
+      # qBittorrent only writes to /data/torrents. The *arr apps move
+      # finished files to /data/media via hardlink + delete the original.
       - ${DATA_DIR:-./data}/torrents:/data/torrents
     networks:
       - proxy
 
   # === Media server (Plex) ===
-  # Corre en network_mode: host — es lo que recomienda Plex para que el
-  # discovery local (GDM) funcione bien con las apps de TV/mobile. Por eso
-  # no se une a la red `proxy` ni pasa por Caddy (tampoco soporta subpath).
-  # Primer acceso: abrí http://<IP-DEL-PI>:32400/web e iniciá sesión con tu
-  # cuenta de Plex para asociar el server (no hace falta PLEX_CLAIM).
+  # Runs in network_mode: host — Plex's recommended setup so local
+  # discovery (GDM) works for TV/mobile apps. Because of this it doesn't
+  # join the `proxy` network or go through Caddy (no subpath support either).
+  # First access: open http://<PI-IP>:32400/web and log in with your Plex
+  # account to claim the server (no PLEX_CLAIM needed).
   plex:
     image: lscr.io/linuxserver/plex:latest
     container_name: plex
@@ -163,7 +162,6 @@ services:
       - VERSION=docker
     volumes:
       - ${CONFIG_DIR:-./config}/plex:/config
-      # Plex solo escanea la biblioteca final.
       - ${DATA_DIR:-./data}/media:/data/media
 
   # === Request management ===
@@ -181,8 +179,8 @@ services:
       - proxy
 
   # === User invitation system ===
-  # Imagen custom de pablokbs con APPLICATION_ROOT funcionando
-  # (commits sobre wizarr upstream en junio 2026).
+  # Custom image from pablokbs with a working APPLICATION_ROOT
+  # (commits on top of upstream wizarr from June 2026).
   wizarr:
     image: docker.io/pablokbs/wizarr
     container_name: wizarr
@@ -198,11 +196,11 @@ services:
       - proxy
 
   # === DNS ad-blocking ===
-  # Pi-hole se expone DIRECTO en :53 (DNS) y :8081 (web UI) del host, sin pasar
-  # por Caddy (no soporta subpath). Para usarlo como DNS de tu red, apuntá el
-  # DNS de tu router (o de cada device) a la IP del Pi. Si el host tiene
-  # systemd-resolved corriendo, va a pelear por el puerto 53 — desactivalo
-  # (ver README, Troubleshooting) antes de levantar este servicio.
+  # Pi-hole is exposed DIRECTLY on :53 (DNS) and :8081 (web UI), bypassing
+  # Caddy (no subpath support). To use it as your network's DNS, point your
+  # router's (or each device's) DNS at the Pi's IP. If the host runs
+  # systemd-resolved, it'll fight over port 53 — disable it first (see
+  # README) before bringing this service up.
   pihole:
     image: pihole/pihole:latest
     container_name: pihole
