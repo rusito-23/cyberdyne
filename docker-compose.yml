@@ -1,4 +1,4 @@
-name: media-stack
+name: cyberdyne
 
 # Stack de medios auto-hospedado con acceso externo via subpaths.
 # Reverse proxy: Caddy con Caddyfile estático (./caddy/Caddyfile).
@@ -11,7 +11,7 @@ name: media-stack
 # ─── Paths ────────────────────────────────────────────────────────────────────
 # Las rutas de host (./config, ./data) se configuran vía variables de entorno
 # en un archivo `.env` al lado de este compose. Copiá `.env.example` como `.env`
-# y editá los valores si querés mover las carpetas (ej. a /srv/media-stack).
+# y editá los valores si querés mover las carpetas (ej. a /srv/cyberdyne).
 # Defaults apuntan a ./config y ./data relativos al compose, igual que antes.
 #
 # ─── Data layout (TRaSH Guides) ────────────────────────────────────────────────

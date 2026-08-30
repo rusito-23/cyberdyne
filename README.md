@@ -1,4 +1,4 @@
-# Media Stack — Jellyfin + *arr auto-hospedado
+# Cyberdyne — Jellyfin + *arr auto-hospedado
 
 Stack completo en Docker para correr tu propio servidor de medios en casa: películas, series, música, subtítulos, descargas y una UI estilo Netflix para pedir contenido, todo detrás de un único reverse proxy con routing por path.
 
@@ -20,7 +20,7 @@ Mirá [`architecture.excalidraw`](architecture.excalidraw) para el diagrama comp
 
 Vista rápida de cómo se conectan las piezas. El pelado apunta al server con dos devices (celu y PC), Caddy rutea por subpath a Jellyfin/Sonarr/Radarr/Bazarr, Sonarr/Radarr/Jackett mandan torrents a qBittorrent que escribe en `/data/torrents/`, y Jellyfin escanea la biblioteca final en `/data/media/`.
 
-![Diagrama del stack](docs/media-stack-diagram.jpg)
+![Diagrama del stack](docs/cyberdyne-diagram.jpg)
 
 La estructura interna de carpetas sigue la convención de [TRaSH Guides](https://trash-guides.info/File-and-Folder-Structure/How-to-set-up/Docker/) para que los *arr puedan usar hardlinks y moves atómicos. Ver [docs/DATA_LAYOUT.md](docs/DATA_LAYOUT.md) para el detalle.
 
@@ -36,8 +36,8 @@ La estructura interna de carpetas sigue la convención de [TRaSH Guides](https:/
 1. Cloná el repo:
 
    ```bash
-   git clone https://github.com/Pelado-Nerdworks/media-stack.git
-   cd media-stack
+   git clone https://github.com/rusito-23/cyberdyne.git
+   cd cyberdyne
    ```
 
 2. Copiá el archivo de ejemplo de variables de entorno:
@@ -98,18 +98,18 @@ La estructura interna de carpetas sigue la convención de [TRaSH Guides](https:/
 
 ### Rutas de almacenamiento
 
-Por defecto, el stack guarda configs en `./config/` y medios/descargas en `./data/`, relativas al `docker-compose.yml`. Para moverlas a otro lado (por ejemplo `/srv/media-stack/`), editá `.env`:
+Por defecto, el stack guarda configs en `./config/` y medios/descargas en `./data/`, relativas al `docker-compose.yml`. Para moverlas a otro lado (por ejemplo `/srv/cyberdyne/`), editá `.env`:
 
 ```env
-CONFIG_DIR=/srv/media-stack/config
-DATA_DIR=/srv/media-stack/data
+CONFIG_DIR=/srv/cyberdyne/config
+DATA_DIR=/srv/cyberdyne/data
 ```
 
 Después mové el contenido existente:
 
 ```bash
-rsync -av ./config/ /srv/media-stack/config/
-rsync -av ./data/ /srv/media-stack/data/
+rsync -av ./config/ /srv/cyberdyne/config/
+rsync -av ./data/ /srv/cyberdyne/data/
 docker compose down
 docker compose up -d
 ```
@@ -189,7 +189,7 @@ docker compose down -v
 ## Estructura del repo
 
 ```
-media-stack/
+cyberdyne/
 ├── config/                 # Settings de cada app (ignorado por git)
 │   ├── jellyfin/
 │   ├── sonarr/

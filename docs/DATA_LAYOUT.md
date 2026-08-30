@@ -70,7 +70,7 @@ Montá `/data` en Readarr (o el nuevo arr que sea), y `/data/torrents/<tipo>` en
 Si venís de una versión anterior de este stack que usaba `data/{movies,series,music,downloads}/` plano, seguí estos pasos. **Frená el stack primero** para que nada esté escribiendo:
 
 ```bash
-cd /opt/media-stack
+cd /opt/cyberdyne
 docker compose down
 
 # Mover descargas existentes al nuevo árbol de staging
