@@ -5,7 +5,7 @@
 > guidelines, so the idea is to keep the full detailed setup here, in text,
 > where it can be described step by step without ambiguity.
 
-This doc assumes the stack is already up (see `README.md` → Setup). If
+This doc assumes the stack is already up (see [GETTING_STARTED.md](GETTING_STARTED.md)). If
 Jackett and FlareSolverr are running, we're good to go.
 
 ---
