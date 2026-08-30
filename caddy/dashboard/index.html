@@ -97,7 +97,7 @@
   <div class="group">
     <h2>Watch &amp; Request</h2>
     <div class="grid">
-      <a class="card" data-port="32400" data-path="/web">
+      <a class="card" data-port="32400" data-path="/web" rel="noreferrer">
         <span class="icon">▶️</span>
         <span class="name">Plex</span>
         <span class="desc">Watch your media library</span>
@@ -140,13 +140,16 @@
     <h2>Downloads &amp; Indexing</h2>
     <div class="grid">
       <!-- These live on their own host ports rather than a Caddy subpath,
-           so the href is filled in by script below using the current hostname. -->
-      <a class="card" data-port="9117">
+           so the href is filled in by script below using the current hostname.
+           rel="noreferrer" avoids sending a Referer with a different-port
+           origin — some apps (qBittorrent) treat that as a CSRF mismatch and
+           reject the request, which can escalate into an IP ban. -->
+      <a class="card" data-port="9117" rel="noreferrer">
         <span class="icon">🔎</span>
         <span class="name">Jackett</span>
         <span class="desc">Indexer proxy</span>
       </a>
-      <a class="card" data-port="8080">
+      <a class="card" data-port="8080" rel="noreferrer">
         <span class="icon">⬇️</span>
         <span class="name">qBittorrent</span>
         <span class="desc">Torrent client</span>
@@ -157,7 +160,7 @@
   <div class="group">
     <h2>Network</h2>
     <div class="grid">
-      <a class="card" data-port="8081" data-path="/admin">
+      <a class="card" data-port="8081" data-path="/admin" rel="noreferrer">
         <span class="icon">🕳️</span>
         <span class="name">Pi-hole</span>
         <span class="desc">DNS / ad-blocking</span>
