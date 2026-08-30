@@ -13,6 +13,7 @@ My Raspberry Pi home server config: media automation and network-wide ad-blockin
 - **Jellyseerr** — request UI
 - **Wizarr** — user invitations
 - **Pi-hole** — network-wide DNS ad-blocking
+- **Beszel** — CPU, RAM, and disk monitoring
 
 See [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) to bring the stack up.
 

@@ -218,6 +218,42 @@ services:
     networks:
       - proxy
 
+  # === System monitoring ===
+  # Beszel hub: web UI + storage for system stats. Exposed DIRECTLY on
+  # :8090, bypassing Caddy (no subpath support).
+  beszel:
+    image: henrygd/beszel:latest
+    container_name: beszel
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    volumes:
+      - ${CONFIG_DIR:-./config}/beszel:/beszel_data
+    networks:
+      - proxy
+
+  # Beszel agent: collects host + container stats and reports them to
+  # the hub. Needs network_mode: host to see real host network stats
+  # (not just this container's), and the Docker socket (read-only) for
+  # per-container stats.
+  # First boot: open the hub at :8090, create an account, then go to
+  # Settings → Add System to generate a KEY and TOKEN, put them in
+  # .env as BESZEL_AGENT_KEY / BESZEL_AGENT_TOKEN, then
+  # `docker compose up -d beszel-agent`.
+  beszel-agent:
+    image: henrygd/beszel-agent:latest
+    container_name: beszel-agent
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ${CONFIG_DIR:-./config}/beszel-agent:/var/lib/beszel-agent
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - LISTEN=45876
+      - HUB_URL=http://localhost:8090
+      - KEY=${BESZEL_AGENT_KEY:-}
+      - TOKEN=${BESZEL_AGENT_TOKEN:-}
+
 networks:
   proxy:
     name: proxy
