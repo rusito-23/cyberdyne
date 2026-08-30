@@ -6,6 +6,7 @@ Stack completo en Docker para correr tu propio servidor de medios en casa: pelí
 
 - **Caddy** — reverse proxy con routing automático por path (un dominio, muchas apps)
 - **Jellyfin** — servidor de medios (películas, series, música)
+- **Plex** — servidor de medios alternativo (`:32400`, sin subpath), corriendo en paralelo a Jellyfin — útil si tu Smart TV no tiene app de Jellyfin
 - **Sonarr** / **Radarr** — automatización de bibliotecas (TV, películas)
 - **Jackett** — gestor de indexers (expuesto en `:9117`, sin subpath)
 - **FlareSolverr** — proxy que resuelve challenges de Cloudflare para indexers (`:8191`)
@@ -29,7 +30,7 @@ La estructura interna de carpetas sigue la convención de [TRaSH Guides](https:/
 
 - Servidor Linux (o VM) con **Docker 24+** y **Docker Compose v2**
 - ~20 GB libres en disco para configs y descargas (más si vas a tener una biblioteca grande)
-- Puertos **80**, **443**, **53** (TCP+UDP), **8080**, **8081**, **9117** y **8191** abiertos
+- Puertos **80**, **443**, **53** (TCP+UDP), **8080**, **8081**, **9117**, **8191** y **32400** abiertos
 - Si el host corre `systemd-resolved` (default en muchas distros), va a competir con Pi-hole por el puerto 53 — desactivalo antes de levantar el stack (ver [Troubleshooting](#troubleshooting))
 - Un dominio público (recomendado para HTTPS) o entradas de DNS local — el stack funciona con `http://localhost` también, pero el HTTPS automático necesita un dominio real
 
@@ -92,6 +93,7 @@ La estructura interna de carpetas sigue la convención de [TRaSH Guides](https:/
    | **Jackett** | **`http://tu-servidor:9117`** |
    | **FlareSolverr** | **`http://tu-servidor:8191`** |
    | **Pi-hole** | **`http://tu-servidor:8081/admin`** |
+   | **Plex** | **`http://tu-servidor:32400/web`** |
 
    La primera vez, cada app te pide crear una cuenta. Mirá [Configuración inicial](#configuración-inicial) más abajo.
 
@@ -158,6 +160,7 @@ Una vez que el stack está arriba y accesible:
     docker logs pihole | grep -i 'random password'
     ```
     Cambiala en `Settings → Web interface / API`. Para que funcione como DNS de tu red, apuntá el DNS de tu router (o de cada device manualmente) a la IP del Pi.
+12. **Plex** — abrí `:32400/web` e iniciá sesión con tu cuenta de Plex (o creá una) para asociar el server. Corre en `network_mode: host` para que las apps de TV/mobile lo descubran solas en la red local. Agregá una biblioteca apuntando a `/data/media`.
 
 ## Operaciones diarias
 
@@ -215,7 +218,8 @@ cyberdyne/
 │   ├── jellyseerr/
 │   ├── wizarr/
 │   ├── flaresolverr/
-│   └── pihole/
+│   ├── pihole/
+│   └── plex/
 ├── caddy/                  # Caddyfile estático, commiteado (es infra-as-code)
 │   └── Caddyfile
 ├── data/                   # Medios + descargas (ignorado por git)
@@ -255,3 +259,4 @@ Pull requests bienvenidos. Mantené los cambios enfocados y actualizá este READ
 - [Jellyseerr](https://github.com/Fallenbagel/jellyseerr) — por la UI de pedidos
 - [Wizarr](https://github.com/Wizarrrr/wizarr) — por el sistema de invitaciones
 - [Pi-hole](https://pi-hole.net/) — por el DNS ad-blocking
+- [Plex](https://www.plex.tv/) — por el servidor de medios alternativo

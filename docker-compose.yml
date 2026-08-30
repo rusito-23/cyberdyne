@@ -162,6 +162,27 @@ services:
     networks:
       - proxy
 
+  # === Media server (Plex) ===
+  # Corre en network_mode: host — es lo que recomienda Plex para que el
+  # discovery local (GDM) funcione bien con las apps de TV/mobile. Por eso
+  # no se une a la red `proxy` ni pasa por Caddy (tampoco soporta subpath).
+  # Primer acceso: abrí http://<IP-DEL-PI>:32400/web e iniciá sesión con tu
+  # cuenta de Plex para asociar el server (no hace falta PLEX_CLAIM).
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Mendoza
+      - VERSION=docker
+    volumes:
+      - ${CONFIG_DIR:-./config}/plex:/config
+      # Plex solo escanea la biblioteca final, igual que Jellyfin.
+      - ${DATA_DIR:-./data}/media:/data/media
+
   # === Request management ===
   jellyseerr:
     image: ghcr.io/seerr-team/seerr:latest
