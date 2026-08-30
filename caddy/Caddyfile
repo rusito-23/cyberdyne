@@ -52,8 +52,9 @@
         respond "ok"
     }
 
-    # Static dashboard with links to every service (caddy/dashboard/index.html)
-    @root path /
+    # Static dashboard with links to every service (caddy/dashboard/index.html),
+    # plus stats.json (written by scripts/beszel-snapshot.py) for its widget.
+    @root path / /stats.json
     handle @root {
         root * /srv/dashboard
         file_server

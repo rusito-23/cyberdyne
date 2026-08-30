@@ -7,39 +7,103 @@
 <style>
   :root {
     color-scheme: dark light;
-    --bg: #0f1115;
-    --card: #1a1d24;
-    --card-hover: #22262f;
-    --text: #e8e9ec;
+    --bg: #0b0d11;
+    --card: #161920;
+    --card-hover: #1c2029;
+    --text: #eceef1;
     --muted: #8b8f98;
     --accent: #7aa2f7;
-    --border: #2a2e37;
+    --accent-soft: rgba(122, 162, 247, 0.14);
+    --border: #262a33;
+    --good: #6ee7b7;
+    --warn: #fbbf24;
+    --bad: #f87171;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
     min-height: 100vh;
-    background: var(--bg);
+    background:
+      radial-gradient(circle at 15% -10%, rgba(122, 162, 247, 0.10) 0%, transparent 40%),
+      radial-gradient(circle at 100% 0%, rgba(110, 231, 183, 0.06) 0%, transparent 35%),
+      var(--bg);
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    padding: 3rem 1.5rem;
+    padding: 3.5rem 1.5rem 3rem;
   }
   header {
     text-align: center;
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
   }
   h1 {
-    font-size: 1.75rem;
-    margin: 0 0 0.25rem;
+    font-size: 1.85rem;
+    margin: 0 0 0.3rem;
     letter-spacing: 0.02em;
+    background: linear-gradient(135deg, #fff, #9fb4e8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
   header p {
     color: var(--muted);
     margin: 0;
     font-size: 0.95rem;
   }
+
+  .stats {
+    max-width: 720px;
+    margin: 0 auto 2.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+  }
+  .stat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.85rem 1rem;
+  }
+  .stat .stat-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.45rem;
+  }
+  .stat .stat-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+  .stat .stat-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .stat .stat-bar {
+    height: 5px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+  }
+  .stat .stat-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--good);
+    width: 0%;
+    transition: width 0.4s ease, background 0.4s ease;
+  }
+  .stats-note {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+    padding: 0.4rem 0;
+  }
+  .stats[hidden] { display: none; }
+
   .groups {
-    max-width: 960px;
+    max-width: 720px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -55,29 +119,72 @@
   }
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
     gap: 0.9rem;
   }
   a.card {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.4rem;
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem 1.1rem;
+    border-radius: 12px;
+    padding: 1.1rem 1.2rem;
     text-decoration: none;
     color: var(--text);
-    transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+    transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   }
   a.card:hover {
     background: var(--card-hover);
     border-color: var(--accent);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   }
-  .card .icon { font-size: 1.4rem; }
+  .card .icon {
+    font-size: 1.5rem;
+    width: 2.2rem;
+    height: 2.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--accent-soft);
+    border-radius: 9px;
+  }
   .card .name { font-weight: 600; font-size: 1rem; }
   .card .desc { color: var(--muted); font-size: 0.82rem; line-height: 1.3; }
+
+  /* Background / set-and-forget tier: compact, muted, collapsed by default */
+  details.group summary {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  details.group summary::-webkit-details-marker { display: none; }
+  details.group summary::before {
+    content: "▸";
+    color: var(--muted);
+    font-size: 0.7rem;
+    transition: transform 0.15s ease;
+  }
+  details.group[open] summary::before { transform: rotate(90deg); }
+  details.group .grid { margin-top: 0.85rem; }
+  details.group a.card {
+    flex-direction: row;
+    align-items: center;
+    padding: 0.65rem 0.9rem;
+    border-radius: 9px;
+  }
+  details.group .card .icon {
+    font-size: 1.1rem;
+    width: 1.8rem;
+    height: 1.8rem;
+    flex: none;
+  }
+  details.group .card .name { font-size: 0.88rem; }
+  details.group .card .desc { font-size: 0.76rem; }
+
   footer {
     text-align: center;
     color: var(--muted);
@@ -92,10 +199,26 @@
   <p>service directory</p>
 </header>
 
+<div class="stats" id="stats" hidden>
+  <div class="stat">
+    <div class="stat-top"><span class="stat-label">CPU</span><span class="stat-value" id="stat-cpu-value">—</span></div>
+    <div class="stat-bar"><div class="stat-fill" id="stat-cpu-fill"></div></div>
+  </div>
+  <div class="stat">
+    <div class="stat-top"><span class="stat-label">Memory</span><span class="stat-value" id="stat-mem-value">—</span></div>
+    <div class="stat-bar"><div class="stat-fill" id="stat-mem-fill"></div></div>
+  </div>
+  <div class="stat">
+    <div class="stat-top"><span class="stat-label">Disk</span><span class="stat-value" id="stat-disk-value">—</span></div>
+    <div class="stat-bar"><div class="stat-fill" id="stat-disk-fill"></div></div>
+  </div>
+  <div class="stats-note" id="stats-note"></div>
+</div>
+
 <div class="groups">
 
   <div class="group">
-    <h2>Watch &amp; Request</h2>
+    <h2>Frequently used</h2>
     <div class="grid">
       <a class="card" data-port="32400" data-path="/web" rel="noreferrer">
         <span class="icon">▶️</span>
@@ -107,16 +230,21 @@
         <span class="name">Jellyseerr</span>
         <span class="desc">Request movies &amp; shows</span>
       </a>
-      <a class="card" href="/wizarr">
-        <span class="icon">🪄</span>
-        <span class="name">Wizarr</span>
-        <span class="desc">Invite users to Plex</span>
+      <a class="card" data-port="8081" data-path="/admin" rel="noreferrer">
+        <span class="icon">🕳️</span>
+        <span class="name">Pi-hole</span>
+        <span class="desc">DNS / ad-blocking</span>
+      </a>
+      <a class="card" data-port="8090" rel="noreferrer">
+        <span class="icon">📊</span>
+        <span class="name">Beszel</span>
+        <span class="desc">CPU, RAM &amp; disk monitoring</span>
       </a>
     </div>
   </div>
 
-  <div class="group">
-    <h2>Automation</h2>
+  <details class="group">
+    <summary><h2 style="display:inline; margin:0;">Background &amp; automation</h2></summary>
     <div class="grid">
       <a class="card" href="/sonarr">
         <span class="icon">📺</span>
@@ -133,12 +261,6 @@
         <span class="name">Bazarr</span>
         <span class="desc">Subtitle management</span>
       </a>
-    </div>
-  </div>
-
-  <div class="group">
-    <h2>Downloads &amp; Indexing</h2>
-    <div class="grid">
       <!-- These live on their own host ports rather than a Caddy subpath,
            so the href is filled in by script below using the current hostname.
            rel="noreferrer" avoids sending a Referer with a different-port
@@ -154,38 +276,22 @@
         <span class="name">qBittorrent</span>
         <span class="desc">Torrent client</span>
       </a>
-    </div>
-  </div>
-
-  <div class="group">
-    <h2>Network</h2>
-    <div class="grid">
-      <a class="card" data-port="8081" data-path="/admin" rel="noreferrer">
-        <span class="icon">🕳️</span>
-        <span class="name">Pi-hole</span>
-        <span class="desc">DNS / ad-blocking</span>
+      <a class="card" href="/wizarr">
+        <span class="icon">🪄</span>
+        <span class="name">Wizarr</span>
+        <span class="desc">Invite users to Plex</span>
       </a>
     </div>
-  </div>
-
-  <div class="group">
-    <h2>System</h2>
-    <div class="grid">
-      <a class="card" data-port="8090" rel="noreferrer">
-        <span class="icon">📊</span>
-        <span class="name">Beszel</span>
-        <span class="desc">CPU, RAM &amp; disk monitoring</span>
-      </a>
-    </div>
-  </div>
+  </details>
 
   <!--
     To add a new service:
-    1. Add a new group (or drop a card into an existing one).
+    1. Frequently used → the "Frequently used" grid. Background/automation
+       tool you rarely open directly → the collapsed group below.
     2. Caddy subpath app (has its own UrlBase, proxied at /name):
          <a class="card" href="/name"><span class="icon">🕳️</span><span class="name">Name</span><span class="desc">What it does</span></a>
     3. App on its own host port (no Caddy route):
-         <a class="card" data-port="PORT" data-path="/admin"><span class="icon">🕳️</span><span class="name">Name</span><span class="desc">What it does</span></a>
+         <a class="card" data-port="PORT" data-path="/admin" rel="noreferrer"><span class="icon">🕳️</span><span class="name">Name</span><span class="desc">What it does</span></a>
   -->
 
 </div>
@@ -198,6 +304,45 @@
     var path = el.getAttribute('data-path') || '/';
     el.href = window.location.protocol + '//' + window.location.hostname + ':' + port + path;
   });
+
+  function levelColor(pct) {
+    if (pct >= 85) return 'var(--bad)';
+    if (pct >= 60) return 'var(--warn)';
+    return 'var(--good)';
+  }
+
+  function setStat(name, pct) {
+    var value = document.getElementById('stat-' + name + '-value');
+    var fill = document.getElementById('stat-' + name + '-fill');
+    if (typeof pct !== 'number') {
+      value.textContent = '—';
+      fill.style.width = '0%';
+      return;
+    }
+    value.textContent = pct.toFixed(0) + '%';
+    fill.style.width = Math.min(100, pct).toFixed(0) + '%';
+    fill.style.background = levelColor(pct);
+  }
+
+  function loadStats() {
+    fetch('/stats.json', { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error('no stats'); return r.json(); })
+      .then(function (data) {
+        var panel = document.getElementById('stats');
+        var note = document.getElementById('stats-note');
+        panel.hidden = false;
+        setStat('cpu', data.cpu);
+        setStat('mem', data.mem);
+        setStat('disk', data.disk);
+        note.textContent = data.status === 'up' ? '' : 'Beszel agent is currently down — showing last known values.';
+      })
+      .catch(function () {
+        document.getElementById('stats').hidden = true;
+      });
+  }
+
+  loadStats();
+  setInterval(loadStats, 30000);
 </script>
 </body>
 </html>
