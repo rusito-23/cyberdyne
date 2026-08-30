@@ -33,4 +33,10 @@
    docker compose up -d beszel-agent
    ```
 
+6. The dashboard's CPU/RAM/disk widget reads a `stats.json` snapshot rather than calling Beszel's API directly (no auth needed that way). It needs a cron job to keep that file fresh:
+
+   ```bash
+   (crontab -l 2>/dev/null; echo "* * * * * /usr/bin/python3 $(pwd)/scripts/beszel-snapshot.py >/dev/null 2>&1") | crontab -
+   ```
+
 See [DATA_LAYOUT.md](DATA_LAYOUT.md) for how `data/` is structured, and [INDEXERS.md](INDEXERS.md) for the full Jackett + FlareSolverr + Sonarr/Radarr indexer setup.
