@@ -197,6 +197,11 @@ services:
       - ${CONFIG_DIR:-./config}/wizarr:/data
     networks:
       - proxy
+    extra_hosts:
+      # Plex runs with network_mode: host, so it has no name on the
+      # `proxy` network — reach it via the Pi's own IP instead. When
+      # adding the Plex server in Wizarr, use http://host.docker.internal:32400
+      - "host.docker.internal:host-gateway"
 
   # === DNS ad-blocking ===
   # Pi-hole is exposed DIRECTLY on :53 (DNS) and :8081 (web UI), bypassing
