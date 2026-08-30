@@ -1,0 +1,42 @@
+{
+    # No real domain, just HTTP on :80 for now.
+    auto_https off
+    admin off
+}
+
+:80 {
+    # === Apps WITH UrlBase / APPLICATION_ROOT configured ===
+    # The proxy does NOT strip the prefix: the app knows its own base
+    # and serves internal URLs with the prefix included.
+
+    @sonarr path /sonarr*
+    handle @sonarr {
+        reverse_proxy sonarr:8989
+    }
+
+    @radarr path /radarr*
+    handle @radarr {
+        reverse_proxy radarr:7878
+    }
+
+    @bazarr path /bazarr*
+    handle @bazarr {
+        reverse_proxy bazarr:6767
+    }
+
+    # === Apps WITHOUT subpath support (prefix stripped) ===
+
+    # qBittorrent doesn't route through here: it's exposed directly on
+    # :8080 of the host (see docker-compose.yml). No stable subpath
+    # support because its internal URLs are relative and break once
+    # Caddy strips the prefix.
+
+    handle /healthz {
+        respond "ok"
+    }
+
+    # Catch-all 404 with a friendly message
+    handle {
+        respond "Not found. Try /sonarr, /radarr, /bazarr. qBittorrent is on :8080. Jackett on :9117. FlareSolverr on :8191." 404
+    }
+}

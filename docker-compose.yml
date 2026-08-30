@@ -1,0 +1,153 @@
+name: cyberdyne
+
+# Self-hosted media automation stack with external access via subpaths.
+# Reverse proxy: Caddy with a static Caddyfile (./caddy/Caddyfile).
+# Access: http://<IP-OR-DOMAIN>/{sonarr,radarr,bazarr}
+#
+# Each app needs its "Base URL" / "UrlBase" set for the subpath to work.
+# After the first boot, run `scripts/configure-base-urls.sh` to configure
+# them and restart the apps.
+#
+# ─── Paths ────────────────────────────────────────────────────────────────────
+# Host paths (./config, ./data) are configured via environment variables
+# in a `.env` file next to this compose file. Copy `.env.example` to `.env`
+# and edit the values if you want to move the folders (e.g. to /srv/cyberdyne).
+# Defaults point to ./config and ./data relative to the compose file.
+#
+# ─── Data layout (TRaSH Guides) ────────────────────────────────────────────────
+# The internal structure follows the TRaSH Guides convention so the *arr apps
+# can use hardlinks and atomic moves between /data/torrents and /data/media.
+# See docs/DATA_LAYOUT.md or https://trash-guides.info/File-and-Folder-Structure/How-to-set-up/Docker/
+
+services:
+  # === Reverse proxy (Caddy with a static Caddyfile) ===
+  caddy:
+    image: caddy:2.10-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # The Caddyfile lives in the repo (./caddy/) — not gitignored, so a
+      # fresh clone has it available for the bind mount.
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - proxy
+
+  # === Indexer manager ===
+  # Jackett is exposed DIRECTLY on :9117. Sonarr/Radarr reach it via
+  # http://jackett:9117 over the internal Docker network (no subpath needed).
+  jackett:
+    image: lscr.io/linuxserver/jackett:latest
+    container_name: jackett
+    restart: unless-stopped
+    ports:
+      - "9117:9117"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Cordoba
+      - AUTO_UPDATE=true
+    volumes:
+      - ${CONFIG_DIR:-./config}/jackett:/config
+      - ${DATA_DIR:-./data}/downloads:/downloads
+    networks:
+      - proxy
+
+  # === FlareSolverr (solves Cloudflare challenges for indexers) ===
+  # Exposed directly on :8191, bypassing Caddy.
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    restart: unless-stopped
+    ports:
+      - "8191:8191"
+    environment:
+      - LOG_LEVEL=info
+    networks:
+      - proxy
+
+  # === TV shows ===
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Mendoza
+    volumes:
+      - ${CONFIG_DIR:-./config}/sonarr:/config
+      # TRaSH layout: Sonarr sees all of /data so hardlinks work and moves
+      # from /data/torrents to /data/media are atomic.
+      - ${DATA_DIR:-./data}:/data
+    networks:
+      - proxy
+
+  # === Movies ===
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Mendoza
+    volumes:
+      - ${CONFIG_DIR:-./config}/radarr:/config
+      - ${DATA_DIR:-./data}:/data
+    networks:
+      - proxy
+
+  # === Subtitles ===
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    restart: unless-stopped
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Mendoza
+    volumes:
+      - ${CONFIG_DIR:-./config}/bazarr:/config
+      - ${DATA_DIR:-./data}/media:/data/media
+    depends_on:
+      - radarr
+      - sonarr
+    networks:
+      - proxy
+
+  # === Downloads ===
+  # qBittorrent is exposed DIRECTLY on :8080, bypassing Caddy. It doesn't
+  # support a stable subpath (its HTML uses relative internal URLs that
+  # break once Caddy strips the prefix) — this is the standard practice.
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Argentina/Mendoza
+      - WEBUI_PORT=8080
+    volumes:
+      - ${CONFIG_DIR:-./config}/qbittorrent:/config
+      # qBittorrent only writes to /data/torrents. The *arr apps move
+      # finished files to /data/media via hardlink + delete the original.
+      - ${DATA_DIR:-./data}/torrents:/data/torrents
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    name: proxy
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
