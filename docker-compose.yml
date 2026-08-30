@@ -231,6 +231,11 @@ services:
       - ${CONFIG_DIR:-./config}/beszel:/beszel_data
     networks:
       - proxy
+    extra_hosts:
+      # Lets the hub (on the bridge network) reach the agent, which runs
+      # with network_mode: host on this same machine. When adding a
+      # system in the hub UI, use "host.docker.internal" as the Host.
+      - "host.docker.internal:host-gateway"
 
   # Beszel agent: collects host + container stats and reports them to
   # the hub. Needs network_mode: host to see real host network stats
