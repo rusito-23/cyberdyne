@@ -177,6 +177,11 @@ services:
       - ${CONFIG_DIR:-./config}/jellyseerr:/app/config
     networks:
       - proxy
+    extra_hosts:
+      # Plex runs with network_mode: host, so it has no name on the
+      # `proxy` network — reach it via the Pi's own IP instead. In
+      # Settings → Plex, use host.docker.internal as the hostname.
+      - "host.docker.internal:host-gateway"
 
   # === User invitation system ===
   # Custom image from pablokbs with a working APPLICATION_ROOT
