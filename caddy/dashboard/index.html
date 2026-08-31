@@ -4,6 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Cyberdyne</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&display=swap" rel="stylesheet" />
 <style>
   :root {
     color-scheme: dark light;
@@ -33,21 +36,59 @@
   }
   header {
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+  .brand-eye {
+    width: 1.7rem;
+    height: 1.7rem;
+    flex: none;
+  }
+  .brand-eye .ring {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 4;
+    opacity: 0.55;
+  }
+  .brand-eye .pupil {
+    fill: var(--bad);
+    filter: drop-shadow(0 0 4px var(--bad)) drop-shadow(0 0 9px rgba(248, 113, 113, 0.7));
+    animation: blink 4s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%, 92%, 100% { transform: scaleY(1); }
+    95% { transform: scaleY(0.1); }
   }
   h1 {
-    font-size: 1.85rem;
-    margin: 0 0 0.3rem;
-    letter-spacing: 0.02em;
+    font-family: "Orbitron", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-weight: 900;
+    font-size: 2.1rem;
+    margin: 0;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
     background: linear-gradient(135deg, #fff, #9fb4e8);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 14px rgba(122, 162, 247, 0.35));
+  }
+  .brand-rule {
+    width: 220px;
+    height: 2px;
+    margin: 0.9rem auto 0.85rem;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0.6;
   }
   header p {
     color: var(--muted);
     margin: 0;
-    font-size: 0.95rem;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
   }
 
   .stats {
@@ -195,7 +236,14 @@
 </head>
 <body>
 <header>
-  <h1>cyberdyne</h1>
+  <div class="brand">
+    <svg class="brand-eye" viewBox="0 0 32 32" aria-hidden="true">
+      <circle class="ring" cx="16" cy="16" r="13" />
+      <circle class="pupil" cx="16" cy="16" r="5.5" />
+    </svg>
+    <h1>Cyberdyne</h1>
+  </div>
+  <div class="brand-rule"></div>
   <p>service directory</p>
 </header>
 
@@ -230,10 +278,10 @@
         <span class="name">Jellyseerr</span>
         <span class="desc">Request movies &amp; shows</span>
       </a>
-      <a class="card" data-port="8081" data-path="/admin" rel="noreferrer">
-        <span class="icon">🕳️</span>
-        <span class="name">Pi-hole</span>
-        <span class="desc">DNS / ad-blocking</span>
+      <a class="card" data-port="7575" rel="noreferrer">
+        <span class="icon">🏠</span>
+        <span class="name">Homarr</span>
+        <span class="desc">Full dashboard with live service widgets</span>
       </a>
     </div>
   </div>
@@ -241,6 +289,11 @@
   <details class="group">
     <summary><h2 style="display:inline; margin:0;">Background &amp; automation</h2></summary>
     <div class="grid">
+      <a class="card" data-port="8081" data-path="/admin" rel="noreferrer">
+        <span class="icon">🕳️</span>
+        <span class="name">Pi-hole</span>
+        <span class="desc">DNS / ad-blocking</span>
+      </a>
       <a class="card" href="/sonarr">
         <span class="icon">📺</span>
         <span class="name">Sonarr</span>

@@ -272,6 +272,28 @@ services:
       - KEY=${BESZEL_AGENT_KEY:-}
       - TOKEN=${BESZEL_AGENT_TOKEN:-}
 
+  # === Dashboard (integrations) ===
+  # Homarr, kept alongside the static dashboard at caddy/dashboard/index.html
+  # — that one stays as the quick, dependency-free link list; Homarr is for
+  # live per-service widgets (Sonarr/Radarr queues, Pi-hole stats, etc).
+  # Exposed DIRECTLY on :7575, bypassing Caddy (Homarr doesn't support
+  # running behind a subpath). Docker socket is mounted read-only so its
+  # widgets can show container status.
+  homarr:
+    image: ghcr.io/homarr-labs/homarr:latest
+    container_name: homarr
+    restart: unless-stopped
+    ports:
+      - "7575:7575"
+    environment:
+      - TZ=America/Argentina/Mendoza
+      - SECRET_ENCRYPTION_KEY=${HOMARR_SECRET_ENCRYPTION_KEY}
+    volumes:
+      - ${CONFIG_DIR:-./config}/homarr:/appdata
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - proxy
+
 networks:
   proxy:
     name: proxy
